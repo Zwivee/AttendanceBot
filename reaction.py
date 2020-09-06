@@ -1,22 +1,30 @@
 import datetime
 import discord
-# import json
+import json
 import os
 
-# from discord.ext import commands
 from dotenv import load_dotenv
+from json import JSONEncoder
 
-# #instantiate an empty dict
-# attendance = {}
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 client = discord.Client()
-# #client = commands.Bot(command_prefix='!')
-# with open("attendance.json") as f:
-#     attendance = json.load(f)
-# default_prefix = "!"
+
+
+def write_json(data, filename='attendance.json'):
+    with open(filename, 'w') as f:
+        json.dump(data, f, indent=4)
+
+
+# # subclass JSONEncoder
+# class DateTimeEncoder(JSONEncoder):
+#     # Override the default method
+#     def default(self, obj):
+#         if isinstance(obj, (datetime.date, datetime.datetime)):
+#             return obj.isoformat()
+
 
 @client.event
 async def on_ready():
@@ -30,17 +38,25 @@ async def on_reaction_add(reaction, user):
     await client.send_message(channel, '{} has added {} to the message: {}'.format(user.name, reaction.emoji, reaction.message.content))
     if reaction.emoji == '✅' or reaction.emoji == '\U0001fa91':
         await client.send_message(channel, currentDate)
-        # attendance[user.name] = currentDate
+        with open('attendance.json') as json_file:
+            data = json.load(json_file)
+
+            temp = data['usr_details']
+
+            # python object to appended
+            y = {user.name: reaction.emoji
+
+                 }
+
+            # appending data to emp_details
+            temp.append(y)
+
+            write_json(data)
 
 
 @client.event
 async def on_reaction_remove(reaction, user):
     channel = reaction.message.channel
     await client.send_message(channel, '{} has removed {} from the message: {}'.format(user.name, reaction.emoji, reaction.message.content))
-
-# @client.command(name='nw', help='Generates list of people who reacted to message with ✅ or \U0001fa91')
-# async def nw(ctx):
-#     with open('mydata.json', 'w') as f:
-#         json.dump(attendance, f)
 
 client.run(TOKEN)
