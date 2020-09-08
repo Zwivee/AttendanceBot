@@ -1,14 +1,3 @@
 {
-    "usr_details": [
-        {
-            "position": 1,
-            "name": "Zwivix",
-            "status": "chair"
-        },
-        {
-            "position": 2,
-            "name": "Zwivix",
-            "status": "yes"
-        }
-    ]
+    "usr_details": []
 }
