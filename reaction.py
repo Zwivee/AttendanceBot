@@ -6,21 +6,12 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from datetime import date
 
-# TODO: Get rid of json file. Create two lists and append to them on reaction,
-# and remove pop from list when reaction removed. To export to excel use this
-# link
-# https://www.geeksforgeeks.org/python-split-given-list-and-insert-in-excel-file/
-# df['chairicon'] = list 1
-# df[''yesicon']= list 2
-# df.to_excel('result.xls', index=False)
-
 # Load environment settings for discord token
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 prefix='!'
 
 # Initialization discord
-bot = discord.Client()
 bot = commands.Bot(command_prefix = prefix)
 bot.remove_command('help')
 
@@ -78,9 +69,12 @@ async def attendance(ctx):
     # Convert to excel
     df.to_excel('attendance.xls', index = False)
 
-    # today = date.today()
-    # d1 = today.strftime("%d/%m/%Y")
-    # await bot.send_message(ctx.channel,'Attendance excel generated')
+    # Get current date
+    today = date.today()
+    d1 = today.strftime("%d/%m/%Y")
+
+    # Reply with message and current date.
+    await bot.send_message(ctx.message.channel,'Attendance excel generated on {}'.format(d1))
 
     # Clear lists
     yesList.clear()
