@@ -63,8 +63,8 @@ async def attendance(ctx):
     # Create two columns
     # Workaround for imbalanced lists in Pandas. Make lists into series first
     # before export to fill all empty elements in list with NaN.
-    df['✅'] = pd.Series(yesList)
-    df['🪑'] = pd.Series(chairList)
+    df['✅'] = pd.Series(yesList,dtype='float64')
+    df['🪑'] = pd.Series(chairList,dtype='float64')
 
     # Convert to excel
     df.to_excel('attendance.xls', index = False)
@@ -74,7 +74,8 @@ async def attendance(ctx):
     d1 = today.strftime("%d/%m/%Y")
 
     # Reply with message and current date.
-    await bot.send_message(ctx.message.channel,'Attendance excel generated on {}'.format(d1))
+    await ctx.send('Attendance excel generated on {}'.format(d1))
+    # await bot.send_message(ctx.message.channel,'Attendance excel generated on {}'.format(d1))
 
     # Clear lists
     yesList.clear()
