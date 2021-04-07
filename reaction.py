@@ -1,12 +1,13 @@
 import discord
 import os
-import pandas as pd
+import re
+import datetime
 import gspread
-import df2gspread as d2g
 
 from dotenv import load_dotenv
 from discord.ext import commands
 from datetime import date
+
 
 # Load environment settings for discord token
 load_dotenv()
@@ -14,67 +15,63 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 prefix = '!'
 
 # Initialization discord
-bot = commands.Bot(command_prefix=prefix)
+intents = discord.Intents.default()
+intents.reactions = True
+intents.members = True
+bot = commands.Bot(command_prefix=prefix, intents=intents)
 bot.remove_command('help')
 
-# Initialize empty lists
-yesList = []
-chairList = []
+# Initialize gspread
+gc = gspread.service_account(filename='keys.json')
 
-# bot started
+sh = gc.open_by_key('1agX8UCmYVC46jnEVh-X08z7q2g0gA6DOOso3RyB2T6w')
+worksheet = sh.worksheet("Master List")
 
-
+# Bot started
 @bot.event
 async def on_ready():
     print("Bot is logged in.")
-    yesList.clear()
-    chairList.clear()
 
 
 @bot.event
 async def on_reaction_add(reaction, user):
-    # Name of user that added reacted to message
-    newPerson = user.name
-
     if reaction.emoji == '✅':
-        # Append to yesList
-        yesList.append(newPerson)
-    elif reaction.emoji == '🪑':
-        # Append to chairList
-        chairList.append(newPerson)
+        # Name of user that added reacted to message
+        newPerson = user.display_name
+        inGameNameQ = newPerson.split(' ', 1)[0]
+        inGameName = inGameNameQ.replace('"', '')
+        message = reaction.message.content
+
+        # Find message date and give weekday in for of 0 Monday - 6 Sunday
+        match = re.search('\d{1}/\d{2}/\d{2}', message)
+        nwWeekDay = datetime.datetime.strptime(
+            match.group(), '%m/%d/%y').date().weekday()
+
+        cell = worksheet.find(inGameName)
+        worksheet.update_cell(cell.row,nwWeekDay+11,'TRUE')
+
 
 
 @bot.event
 async def on_reaction_remove(reaction, user):
-    # Name of user that removed reaction
-    newPerson = user.name
-
     if reaction.emoji == '✅':
-        # Search the length of list
-        for i in range(len(yesList)):
-            # Name matching person that removed reaction found
-            if yesList[i] == user.name:
-                # Remove user
-                yesList.pop(i)
-    elif reaction.emoji == '🪑':
-        for i in range(len(chairList)):
-            if chairList[i] == user.name:
-                chairList.pop(i)
+        # Name of user that added reacted to message
+        newPerson = user.display_name
+        inGameNameQ = newPerson.split(' ', 1)[0]
+        inGameName = inGameNameQ.replace('"', '')
+        message = reaction.message.content
+
+        # Find message date and give weekday in for of 0 Monday - 6 Sunday
+        match = re.search('\d{1}/\d{2}/\d{2}', message)
+        nwWeekDay = datetime.datetime.strptime(
+            match.group(), '%m/%d/%y').date().weekday()
+
+        cell = worksheet.find(inGameName)
+        worksheet.update_cell(cell.row,nwWeekDay+11,'FALSE')
 
 
 @bot.command(pass_context=True)
 async def attendance(ctx):
-
-    df = pd.DataFrame()
-
-    # Create two columns
-    # Workaround for imbalanced lists in Pandas. Make lists into series first
-    # before export to fill all empty elements in list with NaN.
-    df['✅'] = pd.Series(yesList, dtype='float64')
-    df['🪑'] = pd.Series(chairList, dtype='float64')
-
-    # Convert to excel
-    df.to_excel('attendance.xls', index=False)
 
     # Get current date
     today = date.today()
@@ -82,10 +79,6 @@ async def attendance(ctx):
 
     # Reply with message and current date.
     await ctx.send('Attendance excel generated on {}'.format(d1))
-
-    # Clear lists
-    yesList.clear()
-    chairList.clear()
 
 # Run bot
 bot.run(TOKEN)
