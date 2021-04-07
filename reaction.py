@@ -12,6 +12,7 @@ from datetime import date
 # Load environment settings for discord token
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+SHEET = os.getenv('SHEET_ID')
 prefix = '!'
 
 # Initialization discord
@@ -24,7 +25,8 @@ bot.remove_command('help')
 # Initialize gspread
 gc = gspread.service_account(filename='keys.json')
 
-sh = gc.open_by_key('SHEET_ID')
+print(SHEET)
+sh = gc.open_by_key(SHEET)
 worksheet = sh.worksheet('Master List')
 
 # Bot started
