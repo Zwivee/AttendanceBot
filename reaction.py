@@ -24,8 +24,8 @@ bot.remove_command('help')
 # Initialize gspread
 gc = gspread.service_account(filename='keys.json')
 
-sh = gc.open_by_key('1agX8UCmYVC46jnEVh-X08z7q2g0gA6DOOso3RyB2T6w')
-worksheet = sh.worksheet("Master List")
+sh = gc.open_by_key('SHEET_ID')
+worksheet = sh.worksheet('Master List')
 
 # Bot started
 @bot.event
