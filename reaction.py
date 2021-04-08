@@ -60,7 +60,8 @@ def calculateWeekdayFromAnnouncement(reaction):
 
 def updateCell(inGameName, nwWeekDay, status):
     cell = worksheet.find(inGameName)
-    worksheet.update_cell(cell.row, nwWeekDay+11, status)
+    if cell is not None:
+        worksheet.update_cell(cell.row, nwWeekDay+11, status)
 
 
 def checkTodaysAttendanceInSheets(nwWeekDay):
