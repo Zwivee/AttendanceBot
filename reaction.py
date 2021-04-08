@@ -96,11 +96,12 @@ async def kill(ctx):
 
 @bot.command(pass_context=True)
 async def cap(ctx, capacitySetting):
-    global nodeCapacity
-    nodeCapacity = capacitySetting
+    if ctx.message.author.server_permissions.administrator:
+        global nodeCapacity
+        nodeCapacity = capacitySetting
 
-    # Reply with message and new capacity set
-    await ctx.channel.send('Node Cap Set as {}'.format(nodeCapacity))
+        # Reply with message and new capacity set
+        await ctx.channel.send('Node Cap: {}'.format(nodeCapacity))
 
 # Run bot
 bot.run(TOKEN)
