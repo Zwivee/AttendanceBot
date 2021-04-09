@@ -1,4 +1,5 @@
 # AttendanceBot
+
 > Discord bot that tracks reactions to message and adds it to Google Sheet worksheet. Allows the ability to cap reactions on Google Sheets.
 
 ## Table of contents

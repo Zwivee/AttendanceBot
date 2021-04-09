@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from datetime import date
 
-
 # Load environment settings for discord token
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
