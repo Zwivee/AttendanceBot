@@ -25,6 +25,7 @@ Bot is created with:
 * Discord.py version: 1.5.1
 * Google-api-python-client version: 2.1.0
 * Gspread version: 3.6.0
+* Schedule version: 1.1.0
 
 
 ## Setup
@@ -36,6 +37,7 @@ $ pip install discord.py
 $ pip install gspread
 $ pip install --upgrade google-api-python-client
 $ pip install --upgrade google-auth-oauthlib
+$ pip install schedule
 ```
 Copy link https://discord.com/api/oauth2/authorize?client_id=747298773130149948&permissions=525440&scope=bot
 
@@ -44,10 +46,11 @@ Select your server and invite the bot.
 **DON'T FORGET TO RESTRICT BOT TO THE CHANNEL YOU WANT TO KEEP ATTENDANCE**
 
 ## Features
-List of current features in v2.0
+List of current features in v2.1.0
 * Keep track of ✅ reactions on discord only.
 * Record reactions on Google Sheet using Google API v4.
 * Command !cap changes the cap on the amount of reactions accepted by the bot.
+* Reset cap command every day at 6pm PST.
 
 ## Contact
 Created by [@Zwivix](https://github.com/Zwivee) - feel free to contact me!
