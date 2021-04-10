@@ -1,5 +1,6 @@
 # AttendanceBot
-> Discord bot that tracks reactions to message, and provides command to export json data to excel spreadsheet.
+
+> Discord bot that tracks reactions to message and adds it to Google Sheet worksheet. Allows the ability to cap reactions on Google Sheets.
 
 ## Table of contents
 - [AttendanceBot](#attendancebot)
@@ -12,36 +13,41 @@
 
 
 ## General Info
-The need arose where tracking attendance for node wars in BDO for certain node
-sizes. The bot will track what the reaction of ✅ and 🪑.
+The need arose where tracking attendance for node wars in (Black Desert Online) BDO for certain node
+sizes. The bot will track what the reaction of ✅.
 
-Where ✅ means the person will show up for node wars, and 🪑 meaning they can
-show but are okay with being 'benched'.
+Where ✅ means the an individual has the intention to show up for node war on given day.
 
 ## Technologies
 Bot is created with:
-* Discord.py version: 1.5.0a
-* Pandas version: 0.24.2
-* Python version: 3.5.2
+* Python version: 3.8.5
+* Python-dotenv version: 0.15.0
+* Discord.py version: 1.5.1
+* Google-api-python-client version: 2.1.0
+* Gspread version: 3.6.0
 
 
 ## Setup
 To run this bot, install these packages locally using pip:
 ```
-$ pip install python
-$ pip install pandas
+$ pip install python3
+$ pip install python-dotenv
+$ pip install discord.py
+$ pip install gspread
+$ pip install --upgrade google-api-python-client
+$ pip install --upgrade google-auth-oauthlib
 ```
-Copy link https://discord.com/oauth2/authorize?client_id=747298773130149948&scope=bot
+Copy link https://discord.com/api/oauth2/authorize?client_id=747298773130149948&permissions=525440&scope=bot
 
 Select your server and invite the bot.
 
 **DON'T FORGET TO RESTRICT BOT TO THE CHANNEL YOU WANT TO KEEP ATTENDANCE**
 
 ## Features
-List of current features in v1.0
-* Keep track of ✅ and 🪑 reactions on discord only.
-* Produces excel spreadsheet on root directory.
-* Command !attendance will generate excel spreadsheet.
+List of current features in v2.0
+* Keep track of ✅ reactions on discord only.
+* Record reactions on Google Sheet using Google API v4.
+* Command !cap changes the cap on the amount of reactions accepted by the bot.
 
 ## Contact
 Created by [@Zwivix](https://github.com/Zwivee) - feel free to contact me!

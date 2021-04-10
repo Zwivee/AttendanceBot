@@ -130,3 +130,7 @@ dmypy.json
 
 # Excel spreadsheet
 *.xls
+
+# Json files
+*.json
+
