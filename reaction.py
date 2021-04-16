@@ -61,7 +61,8 @@ def calculateWeekdayFromAnnouncement(reaction):
 
 def updateCell(inGameName, nwWeekDay, status):
     try:
-        cell = worksheet.find(inGameName)
+        caseInsensitiveCheck = re.compile(rf'(?i){inGameName}')
+        cell = worksheet.find(caseInsensitiveCheck)
     except:
         print("Cannot find name")
     else:
