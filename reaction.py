@@ -39,7 +39,6 @@ nodeCapacity = 100
 async def on_ready():
     print("Bot is logged in.")
 
-
 def getUser(user):
     # Name of user that added reacted to message
     newPerson = user.display_name
@@ -79,7 +78,6 @@ def checkTodaysAttendanceInSheets(nwWeekDay):
     else:
         currentAttendance = worksheet.cell(2, nwWeekDay + 10).value
     return int(currentAttendance)
-
 
 @bot.event
 async def on_reaction_add(reaction, user):
