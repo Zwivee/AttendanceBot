@@ -148,7 +148,7 @@ def seconds_until(hours, minutes):
     return (future_exec - now).total_seconds()
 
 
-# Resets the node war cap variable every day, current setting at 6pm pst v2.1.1
+# Resets the node war cap variable every day, current setting at 6pm pst v2.1.2
 @tasks.loop(hours=nodeCapacityResetTimer)
 async def resetCap():
     await asyncio.sleep(seconds_until(hourOfDayToeset, minuteOfHourToReset))
