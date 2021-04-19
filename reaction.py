@@ -29,26 +29,34 @@ worksheet = sh.worksheet('Master List')
 
 # Global settings
 # Currently if we want to restrain the number of people that can be checked, but this will become obsolete when uncapped begins
+maxAttendace = 100
 global nodeCapacity
-nodeCapacity = 100
+nodeCapacity = maxAttendace
+colContainingNames = 2
+monToFriOffset = 11
+sundayOffset = 10
+sunday = 6
+nodeCapacityResetTimer = 24  # in hours
+hourOfDayToeset = 18  # military time
+minuteOfHourToReset = 00
+
 
 # Bot started
-
-
 @bot.event
 async def on_ready():
     print("Bot is logged in.")
 
+
+# Name of user that added reacted to message
 def getUser(user):
-    # Name of user that added reacted to message
     newPerson = user.display_name
     inGameNameQ = newPerson.split(' ', 1)[0]
     inGameName = inGameNameQ.replace('"', '')
     return inGameName
 
 
+# Find message date and give weekday in for of 0 Monday - 6 Sunday
 def calculateWeekdayFromAnnouncement(reaction):
-    # Find message date and give weekday in for of 0 Monday - 6 Sunday
     message = reaction.message.content
 
     match = re.search('\d{1}/\d{2}/\d{2}', message)
@@ -58,27 +66,34 @@ def calculateWeekdayFromAnnouncement(reaction):
         return nwWeekDay
 
 
+# Find the cell in google sheet that matches inGameName and try to update the correct day
 def updateCell(inGameName, nwWeekDay, status):
     try:
-        caseInsensitiveCheck = re.compile(rf'(?i){inGameName}')
+        # \b binds results to whole words, and used built in ignore case method
+        caseInsensitiveCheck = re.compile(rf"\b{inGameName}\b", re.IGNORECASE)
         cell = worksheet.find(caseInsensitiveCheck)
     except:
-        print("Cannot find name")
+        print("Cannot find name" + inGameName)
     else:
         # Since we do not node war on Saturday the sheet is missing a column and therefor sunday must be calculated with an offset
-        if nwWeekDay != 6:
-            worksheet.update_cell(cell.row, nwWeekDay + 11, status)
+        if nwWeekDay != sunday:
+            worksheet.update_cell(cell.row, nwWeekDay + monToFriOffset, status)
         else:
-            worksheet.update_cell(cell.row, nwWeekDay + 10, status)
+            worksheet.update_cell(cell.row, nwWeekDay + sundayOffset, status)
 
 
+# Since we do not node war on Saturday the sheet is missing a column and therefore sunday must be calculated with an offset.
 def checkTodaysAttendanceInSheets(nwWeekDay):
-    if nwWeekDay != 6:
-        currentAttendance = worksheet.cell(2, nwWeekDay + 11).value
+    if nwWeekDay != sunday:
+        currentAttendance = worksheet.cell(colContainingNames,
+                                           nwWeekDay + monToFriOffset).value
     else:
-        currentAttendance = worksheet.cell(2, nwWeekDay + 10).value
-    return int(currentAttendance)
+        currentAttendance = worksheet.cell(colContainingNames,
+                                           nwWeekDay + sundayOffset).value
+    return int(currentAttendace)
 
+  
+# Triggers when message in channel has ✅ added from message. Reads the date and updates the correct cell in google sheets.
 @bot.event
 async def on_reaction_add(reaction, user):
     inGameName = getUser(user)
@@ -89,6 +104,7 @@ async def on_reaction_add(reaction, user):
             updateCell(inGameName, nwWeekDay, 'TRUE')
 
 
+# Triggers when message in channel has ✅ removed from message. Reads the date and updates the correct cell in google sheets.
 @bot.event
 async def on_reaction_remove(reaction, user):
     if reaction.emoji == '✅':
@@ -98,17 +114,36 @@ async def on_reaction_remove(reaction, user):
             updateCell(inGameName, nwWeekDay, 'FALSE')
 
 
+# Handler for command errors
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandNotFound):
+        return
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Missing a required argument. Do !help")
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send(
+            "You do not have the appropriate permissions to run this command.")
+    if isinstance(error, commands.BotMissingPermissions):
+        await ctx.send("I don't have sufficient permissions!")
+    else:
+        print("Error not caught")
+        print(error)
+
+
+# Command !kill that can only be used by server administrators to stop the bot
 @bot.command(pass_context=True, alias=["quit"])
 @commands.has_permissions(administrator=True)
-async def kill(ctx):
+async def Kill(ctx):
     # Allow any server administrators to kill the bottom
     await bot.close()
     print('Bot is logged out')
 
 
+# Command !cap that can only be used by server administrators to change the node war cap
 @bot.command(pass_context=True)
 @commands.has_permissions(administrator=True)
-async def cap(ctx, capacitySetting):
+async def Cap(ctx, capacitySetting):
     global nodeCapacity
     nodeCapacity = capacitySetting
 
@@ -116,6 +151,45 @@ async def cap(ctx, capacitySetting):
     await ctx.channel.send('Node Cap: {}'.format(nodeCapacity))
 
 
+# Starts a command group for the help command
+# Command groups will expand on a certain command such as help <command>
+@bot.group(invoke_without_command=True)
+async def help(ctx):
+    em = discord.Embed(
+        title="Help",
+        description=
+        "Use !help <command> for extended information on a command.",
+        color=ctx.author.color)
+    em.add_field(name="Moderation", value="Kill")
+    em.add_field(name="Basic", value="Cap")
+
+    await ctx.send(embed=em)
+
+
+# Part of help command group expand on the help command
+# Will not return base help command, but will instead return declared embed
+@help.command()
+async def kill(ctx):
+    em = discord.Embed(title="Kill",
+                       description="Kill the bot",
+                       color=ctx.author.color)
+
+    await ctx.send(embed=em)
+
+
+# Part of help command group expand on the help command
+# Will not return base help command, but will instead return declared embed
+@help.command()
+async def cap(ctx):
+    em = discord.Embed(title="Cap",
+                       description="Changes attendace capacity.",
+                       color=ctx.author.color)
+    em.add_field(name="**Syntax**", value="!cap <number>")
+
+    await ctx.send(embed=em)
+
+
+# Timer to calculate when to run the task to reset nodewar cap automatically
 def seconds_until(hours, minutes):
     given_time = datetime.time(hours, minutes)
     now = datetime.datetime.now()
@@ -129,11 +203,12 @@ def seconds_until(hours, minutes):
     return (future_exec - now).total_seconds()
 
 
-@tasks.loop(hours=24)
+# Resets the node war cap variable every day, current setting at 6pm pst v2.1.2
+@tasks.loop(hours=nodeCapacityResetTimer)
 async def resetCap():
-    await asyncio.sleep(seconds_until(18, 00))
+    await asyncio.sleep(seconds_until(hourOfDayToeset, minuteOfHourToReset))
     global nodeCapacity
-    nodeCapacity = 100
+    nodeCapacity = maxAttendace
     print('Node Capacity Reset')
 
 
