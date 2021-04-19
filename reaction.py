@@ -114,10 +114,27 @@ async def on_reaction_remove(reaction, user):
             updateCell(inGameName, nwWeekDay, 'FALSE')
 
 
+# Handler for command errors
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandNotFound):
+        return
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Missing a required argument. Do !help")
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send(
+            "You do not have the appropriate permissions to run this command.")
+    if isinstance(error, commands.BotMissingPermissions):
+        await ctx.send("I don't have sufficient permissions!")
+    else:
+        print("Error not caught")
+        print(error)
+
+
 # Command !kill that can only be used by server administrators to stop the bot
 @bot.command(pass_context=True, alias=["quit"])
 @commands.has_permissions(administrator=True)
-async def kill(ctx):
+async def Kill(ctx):
     # Allow any server administrators to kill the bottom
     await bot.close()
     print('Bot is logged out')
@@ -126,12 +143,50 @@ async def kill(ctx):
 # Command !cap that can only be used by server administrators to change the node war cap
 @bot.command(pass_context=True)
 @commands.has_permissions(administrator=True)
-async def cap(ctx, capacitySetting):
+async def Cap(ctx, capacitySetting):
     global nodeCapacity
     nodeCapacity = capacitySetting
 
     # Reply with message and new capacity set
     await ctx.channel.send('Node Cap: {}'.format(nodeCapacity))
+
+
+# Starts a command group for the help command
+# Command groups will expand on a certain command such as help <command>
+@bot.group(invoke_without_command=True)
+async def help(ctx):
+    em = discord.Embed(
+        title="Help",
+        description=
+        "Use !help <command> for extended information on a command.",
+        color=ctx.author.color)
+    em.add_field(name="Moderation", value="Kill")
+    em.add_field(name="Basic", value="Cap")
+
+    await ctx.send(embed=em)
+
+
+# Part of help command group expand on the help command
+# Will not return base help command, but will instead return declared embed
+@help.command()
+async def kill(ctx):
+    em = discord.Embed(title="Kill",
+                       description="Kill the bot",
+                       color=ctx.author.color)
+
+    await ctx.send(embed=em)
+
+
+# Part of help command group expand on the help command
+# Will not return base help command, but will instead return declared embed
+@help.command()
+async def cap(ctx):
+    em = discord.Embed(title="Cap",
+                       description="Changes attendace capacity.",
+                       color=ctx.author.color)
+    em.add_field(name="**Syntax**", value="!cap <number>")
+
+    await ctx.send(embed=em)
 
 
 # Timer to calculate when to run the task to reset nodewar cap automatically
