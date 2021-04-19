@@ -22,6 +22,12 @@ Where ✅ means the an individual has the intention to show up for node war on g
 ## Technologies
 
 Bot is created with:
+* Python version: 3.8.5
+* Python-dotenv version: 0.15.0
+* Discord.py version: 1.5.1
+* Google-api-python-client version: 2.1.0
+* Gspread version: 3.6.0
+* Schedule version: 1.1.0
 
 - Python version: 3.8.5
 - Python-dotenv version: 0.15.0

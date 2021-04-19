@@ -90,9 +90,9 @@ def checkTodaysAttendanceInSheets(nwWeekDay):
     else:
         currentAttendance = worksheet.cell(colContainingNames,
                                            nwWeekDay + sundayOffset).value
-    return int(currentAttendance)
+    return int(currentAttendace)
 
-
+  
 # Triggers when message in channel has ✅ added from message. Reads the date and updates the correct cell in google sheets.
 @bot.event
 async def on_reaction_add(reaction, user):
