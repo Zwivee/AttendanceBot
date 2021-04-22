@@ -22,12 +22,6 @@ Where ✅ means the an individual has the intention to show up for node war on g
 ## Technologies
 
 Bot is created with:
-* Python version: 3.8.5
-* Python-dotenv version: 0.15.0
-* Discord.py version: 1.5.1
-* Google-api-python-client version: 2.1.0
-* Gspread version: 3.6.0
-* Schedule version: 1.1.0
 
 - Python version: 3.8.5
 - Python-dotenv version: 0.15.0
@@ -41,13 +35,7 @@ Bot is created with:
 To run this bot, install these packages locally using pip:
 
 ```
-$ pip install python3
-$ pip install python-dotenv
-$ pip install discord.py
-$ pip install gspread
-$ pip install --upgrade google-api-python-client
-$ pip install --upgrade google-auth-oauthlib
-$ pip install schedule
+$ pip install -r requirements.pip
 ```
 
 Copy link https://discord.com/api/oauth2/authorize?client_id=747298773130149948&permissions=525440&scope=bot
@@ -58,7 +46,7 @@ Select your server and invite the bot.
 
 ## Features
 
-List of current features in v2.1.2
+List of current features in v2.1.3
 
 - Keep track of ✅ reactions on discord only.
 - Record reactions on Google Sheet using Google API v4.
