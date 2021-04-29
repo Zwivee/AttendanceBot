@@ -50,9 +50,10 @@ async def on_ready():
 # Name of user that added reacted to message
 def get_user(user):
     new_person = user.display_name
-    in_game_name_q = new_person.split(' ', 1)[0]
-    in_game_name = in_game_name_q.replace('"', '')
-    return in_game_name
+    pattern = '''"([^"]*)"'''
+    in_game_name = re.findall(pattern, new_person, re.IGNORECASE)
+    result = in_game_name[0]
+    return result
 
 
 # Find message date and give weekday in for of 0 Monday - 6 Sunday
@@ -70,9 +71,8 @@ def calculate_weekday_from_announcement(reaction):
 def update_cell(in_game_name_update, target_weekday, status):
     try:
         # \b binds results to whole words, and used built in ignore case method
-        case_insensitive_check = re.compile(rf"\b{in_game_name_update}\b",
-                                            re.IGNORECASE)
-        cell = worksheet.find(case_insensitive_check)
+        whole_word_match_ign = re.compile(rf"\b{in_game_name_update}\b")
+        cell = worksheet.find(whole_word_match_ign)
     except gspread.CellNotFound:
         print("Cannot find name " + in_game_name_update)
     else:
