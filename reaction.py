@@ -165,6 +165,12 @@ async def cap(ctx, capacity_setting):
     await ctx.channel.send('Node Cap: {}'.format(NODE_CAPACITY))
 
 
+@bot.command(pass_context=True)
+@commands.has_permissions(administrator=True)
+async def current(ctx):
+    await ctx.channel.send('Current node cap: {}'.format(NODE_CAPACITY))
+
+
 # Starts a command group for the help command
 # Command groups will expand on a certain command such as help <command>
 @bot.group(invoke_without_command=True)
