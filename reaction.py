@@ -39,6 +39,7 @@ SUNDAY = 6
 NODE_CAPACITY_RESET_TIMER = 24  # in hours
 HOUR_OF_DAY_TO_RESET = 18  # military time
 MINUTE_OF_HOUR_TO_RESET = 00
+extra_list = []
 
 
 # Bot started
@@ -112,6 +113,9 @@ async def on_reaction_add(reaction, user):
                 check_todays_attendance_in_sheets(current_nw_weekday) <
                 int(NODE_CAPACITY)):
             update_cell(user_in_game_name, current_nw_weekday, 'TRUE')
+        elif ((check_todays_attendance_in_sheets(current_nw_weekday) >=
+               int(NODE_CAPACITY))):
+            extra_list.append(user_in_game_name)
 
 
 # Triggers when message in channel has ✅ removed from message
@@ -122,10 +126,11 @@ async def on_reaction_remove(reaction, user):
         user_in_game_name = get_user(user)
         current_nw_weekday = calculate_weekday_from_announcement(reaction)
         # Check if officer posting did not place date in announcement
-        # TODO: Move this out to a Function
-        # TODO: Add Try-Catch for logging purposes
         if current_nw_weekday is not None:
             update_cell(user_in_game_name, current_nw_weekday, 'FALSE')
+        elif ((check_todays_attendance_in_sheets(current_nw_weekday) >=
+               int(NODE_CAPACITY))):
+            extra_list.pop(user_in_game_name)
 
 
 # Handler for command errors
@@ -169,6 +174,17 @@ async def cap(ctx, capacity_setting):
 @commands.has_permissions(administrator=True)
 async def current(ctx):
     await ctx.channel.send('Current node cap: {}'.format(NODE_CAPACITY))
+
+
+@bot.command(pass_context=True)
+@commands.has_permissions(administrator=True)
+async def list(ctx):
+    for users in extra_list:
+        print_list = users + ","
+    if not extra_list:
+        await ctx.channel.send('None')
+    else:
+        await ctx.channel.send('Extra members: {}'.format(print_list))
 
 
 # Starts a command group for the help command
