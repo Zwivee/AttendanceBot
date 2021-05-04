@@ -213,7 +213,7 @@ async def help(ctx):
         "Use !help <command> for extended information on a command.",
         color=ctx.author.color)
     embed_result.add_field(name="Moderation", value="kill")
-    embed_result.add_field(name="Basic", value="cap,current,list")
+    embed_result.add_field(name="Basic", value="cap,current,waitlist")
 
     await ctx.send(embed=embed_result)
 
