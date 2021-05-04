@@ -40,6 +40,7 @@ NODE_CAPACITY_RESET_TIMER = 48  # in hours
 HOUR_OF_DAY_TO_RESET = 18  # military time
 MINUTE_OF_HOUR_TO_RESET = 00
 extra_list = []
+current_nw_weekday = None
 
 
 # Bot started
@@ -50,10 +51,13 @@ async def on_ready():
 
 # Name of user that added reacted to message
 def get_user(user):
-    new_person = user.display_name
-    pattern = '''"([^"]*)"'''
-    in_game_name = re.findall(pattern, new_person, re.IGNORECASE)
-    result = in_game_name[0]
+    try:
+        new_person = user.display_name
+        pattern = '''"([^"]*)"'''
+        in_game_name = re.findall(pattern, new_person, re.IGNORECASE)
+        result = in_game_name[0]
+    except TypeError:
+        print("username not in the correct format " + new_person)
     return result
 
 
@@ -106,6 +110,7 @@ def check_todays_attendance_in_sheets(target_nw_weekday_to_check):
 @bot.event
 async def on_reaction_add(reaction, user):
     user_in_game_name = get_user(user)
+    global current_nw_weekday
     current_nw_weekday = calculate_weekday_from_announcement(reaction)
     # Check if officer posting did not place date in announcement
     if current_nw_weekday is not None:
@@ -164,7 +169,17 @@ async def kill():
 @commands.has_permissions(administrator=True)
 async def cap(ctx, capacity_setting):
     global NODE_CAPACITY
+    global extra_list
     NODE_CAPACITY = capacity_setting
+    # Attempt to empty out extra list onto the sheet
+    try:
+        for users in extra_list:
+            if (check_todays_attendance_in_sheets(current_nw_weekday) <
+                    int(NODE_CAPACITY)):
+                update_cell(users, current_nw_weekday, 'TRUE')
+                extra_list.remove(users)
+    except IndexError:
+        print("Cap changed, but extra list is empty")
     # Reply with message and new capacity set
     await ctx.channel.send('Node Cap: {}'.format(NODE_CAPACITY))
 
@@ -179,7 +194,7 @@ async def current(ctx):
 # Command !list will return the names of the people that have signed up but not reflected on the sheet
 @bot.command(pass_context=True)
 @commands.has_permissions(administrator=True)
-async def list(ctx):
+async def waitlist(ctx):
     for users in extra_list:
         print_list = users + ","
     if not extra_list:
@@ -218,9 +233,11 @@ async def kill_help(ctx):
 # Will not return base help command, but will instead return declared embed
 @help.command()
 async def cap_help(ctx):
-    embed_result = discord.Embed(title="cap",
-                                 description="Changes attendace capacity.",
-                                 color=ctx.author.color)
+    embed_result = discord.Embed(
+        title="cap",
+        description=
+        "Changes attendace capacity. If cap is increased, then it will automatically add all the people on waitlist",
+        color=ctx.author.color)
     embed_result.add_field(name="**Syntax**", value="!cap <number>")
 
     await ctx.send(embed=embed_result)
@@ -237,9 +254,9 @@ async def current_help(ctx):
 
 
 @help.command()
-async def list_help(ctx):
+async def waitlist_help(ctx):
     embed_result = discord.Embed(
-        title="list",
+        title="waitlist",
         description=
         "Shows list of people beyond the node war cap that signed up. Returns list in chronological order (i.e. First on the list reacted first to announcement)",
         color=ctx.author.color)
@@ -264,7 +281,7 @@ def seconds_until(hours, minutes):
 # Resets the node war cap variable every node war day, current setting at 6pm pst v2.1.3
 @tasks.loop(hours=NODE_CAPACITY_RESET_TIMER)
 async def reset_capacity():
-    now = datetime.now().date().weekday()
+    now = datetime.datetime.now().date().weekday()
     # The current week day is Wed, Thurs, Fri, Sunday
     if (now >= 2 and now < 5 or now == 6):
         await asyncio.sleep(
