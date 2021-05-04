@@ -36,7 +36,7 @@ COL_CONTAIN_IN_GAMES = 2
 MON_TO_FRI_OFFSET = 11
 SUNDAY_OFFSET = 10
 SUNDAY = 6
-NODE_CAPACITY_RESET_TIMER = 24  # in hours
+NODE_CAPACITY_RESET_TIMER = 48  # in hours
 HOUR_OF_DAY_TO_RESET = 18  # military time
 MINUTE_OF_HOUR_TO_RESET = 00
 extra_list = []
@@ -165,17 +165,18 @@ async def kill():
 async def cap(ctx, capacity_setting):
     global NODE_CAPACITY
     NODE_CAPACITY = capacity_setting
-
     # Reply with message and new capacity set
     await ctx.channel.send('Node Cap: {}'.format(NODE_CAPACITY))
 
 
+# Command !current will return the current node war size cap set
 @bot.command(pass_context=True)
 @commands.has_permissions(administrator=True)
 async def current(ctx):
     await ctx.channel.send('Current node cap: {}'.format(NODE_CAPACITY))
 
 
+# Command !list will return the names of the people that have signed up but not reflected on the sheet
 @bot.command(pass_context=True)
 @commands.has_permissions(administrator=True)
 async def list(ctx):
@@ -196,8 +197,8 @@ async def help(ctx):
         description=
         "Use !help <command> for extended information on a command.",
         color=ctx.author.color)
-    embed_result.add_field(name="Moderation", value="Kill")
-    embed_result.add_field(name="Basic", value="Cap")
+    embed_result.add_field(name="Moderation", value="kill")
+    embed_result.add_field(name="Basic", value="cap,current,list")
 
     await ctx.send(embed=embed_result)
 
@@ -225,6 +226,27 @@ async def cap_help(ctx):
     await ctx.send(embed=embed_result)
 
 
+@help.command()
+async def current_help(ctx):
+    embed_result = discord.Embed(
+        title="current",
+        description="Shows current node war cap size.",
+        color=ctx.author.color)
+
+    await ctx.send(embed=embed_result)
+
+
+@help.command()
+async def list_help(ctx):
+    embed_result = discord.Embed(
+        title="list",
+        description=
+        "Shows list of people beyond the node war cap that signed up. Returns list in chronological order (i.e. First on the list reacted first to announcement)",
+        color=ctx.author.color)
+
+    await ctx.send(embed=embed_result)
+
+
 # Timer to calculate when to run the task to reset nodewar cap automatically
 def seconds_until(hours, minutes):
     given_time = datetime.time(hours, minutes)
@@ -239,14 +261,17 @@ def seconds_until(hours, minutes):
     return (future_exec - now).total_seconds()
 
 
-# Resets the node war cap variable every day, current setting at 6pm pst v2.1.2
+# Resets the node war cap variable every node war day, current setting at 6pm pst v2.1.3
 @tasks.loop(hours=NODE_CAPACITY_RESET_TIMER)
 async def reset_capacity():
-    await asyncio.sleep(
-        seconds_until(HOUR_OF_DAY_TO_RESET, MINUTE_OF_HOUR_TO_RESET))
-    global NODE_CAPACITY
-    NODE_CAPACITY = MAX_ATTENDANCE
-    print('Node Capacity Reset')
+    now = datetime.now().date().weekday()
+    # The current week day is Wed, Thurs, Fri, Sunday
+    if (now >= 2 and now < 5 or now == 6):
+        await asyncio.sleep(
+            seconds_until(HOUR_OF_DAY_TO_RESET, MINUTE_OF_HOUR_TO_RESET))
+        global NODE_CAPACITY
+        NODE_CAPACITY = MAX_ATTENDANCE
+        print('Node Capacity Reset')
 
 
 reset_capacity.start()
