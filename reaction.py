@@ -213,7 +213,7 @@ async def help(ctx):
         "Use !help <command> for extended information on a command.",
         color=ctx.author.color)
     embed_result.add_field(name="Moderation", value="kill")
-    embed_result.add_field(name="Basic", value="cap,current,waitlist")
+    embed_result.add_field(name="Basic", value="cap, current, waitlist")
 
     await ctx.send(embed=embed_result)
 
@@ -221,7 +221,7 @@ async def help(ctx):
 # Part of help command group expand on the help command
 # Will not return base help command, but will instead return declared embed
 @help.command()
-async def kill_help(ctx):
+async def kill(ctx):
     embed_result = discord.Embed(title="kill",
                                  description="Kill the bot",
                                  color=ctx.author.color)
@@ -232,7 +232,7 @@ async def kill_help(ctx):
 # Part of help command group expand on the help command
 # Will not return base help command, but will instead return declared embed
 @help.command()
-async def cap_help(ctx):
+async def cap(ctx):
     embed_result = discord.Embed(
         title="cap",
         description=
@@ -244,7 +244,7 @@ async def cap_help(ctx):
 
 
 @help.command()
-async def current_help(ctx):
+async def current(ctx):
     embed_result = discord.Embed(
         title="current",
         description="Shows current node war cap size.",
@@ -254,7 +254,7 @@ async def current_help(ctx):
 
 
 @help.command()
-async def waitlist_help(ctx):
+async def waitlist(ctx):
     embed_result = discord.Embed(
         title="waitlist",
         description=
