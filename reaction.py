@@ -51,13 +51,13 @@ async def on_ready():
 
 # Name of user that added reacted to message
 def get_user(user):
-    try:
-        new_person = user.display_name
-        pattern = '''"([^"]*)"'''
-        in_game_name = re.findall(pattern, new_person, re.IGNORECASE)
+    new_person = user.display_name
+    pattern = '''"([^"]*)"'''
+    in_game_name = re.findall(pattern, new_person, re.IGNORECASE)
+    if in_game_name:
         result = in_game_name[0]
-    except TypeError:
-        print("username not in the correct format " + new_person)
+    else:
+        print("Could not find the user from the string " + new_person)
     return result
 
 
@@ -206,6 +206,7 @@ async def waitlist(ctx):
 # Starts a command group for the help command
 # Command groups will expand on a certain command such as help <command>
 @bot.group(invoke_without_command=True)
+@commands.has_permissions(administrator=True)
 async def help(ctx):
     embed_result = discord.Embed(
         title="Help",
