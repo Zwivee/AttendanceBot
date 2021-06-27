@@ -265,34 +265,5 @@ async def waitlist(ctx):
     await ctx.send(embed=embed_result)
 
 
-# Timer to calculate when to run the task to reset nodewar cap automatically
-def seconds_until(hours, minutes):
-    given_time = datetime.time(hours, minutes)
-    now = datetime.datetime.now()
-    future_exec = datetime.datetime.combine(now, given_time)
-    if (
-            future_exec - now
-    ).days < 0:  # If we are past the execution, it will take place tomorrow
-        future_exec = datetime.datetime.combine(
-            now + datetime.timedelta(days=1), given_time)  # days always >= 0
-
-    return (future_exec - now).total_seconds()
-
-
-# Resets the node war cap variable every node war day, current setting at 6pm pst v2.1.3
-@tasks.loop(hours=NODE_CAPACITY_RESET_TIMER)
-async def reset_capacity():
-    now = datetime.datetime.now().date().weekday()
-    # The current week day is Wed, Thurs, Fri, Sunday
-    if (now >= 2 and now < 5 or now == 6):
-        await asyncio.sleep(
-            seconds_until(HOUR_OF_DAY_TO_RESET, MINUTE_OF_HOUR_TO_RESET))
-        global NODE_CAPACITY
-        NODE_CAPACITY = MAX_ATTENDANCE
-        print('Node Capacity Reset')
-
-
-reset_capacity.start()
-
 # Run bot
 bot.run(TOKEN)
