@@ -36,8 +36,8 @@ COL_CONTAIN_IN_GAMES = 2
 NODE_CAPACITY_RESET_TIMER = 24  # in hours
 HOUR_OF_DAY_TO_RESET = 18  # military time
 MINUTE_OF_HOUR_TO_RESET = 00
-extra_list = []
-normal_list = []
+extra_list = {}
+normal_list = {}
 current_nw_weekday = None
 MONDAY = worksheet.find("Mon").col
 TUESDAY = worksheet.find("Tue").col
@@ -133,10 +133,10 @@ async def on_reaction_add(reaction, user):
                 check_todays_attendance_in_sheets(current_nw_weekday) <
                 int(NODE_CAPACITY)) and user_in_game_name:
             update_cell(user_in_game_name, current_nw_weekday, 'TRUE')
-            normal_list.append(order_of_reaction_add, user_in_game_name)
+            normal_list[user_in_game_name] = order_of_reaction_add
         elif ((check_todays_attendance_in_sheets(current_nw_weekday) >=
                int(NODE_CAPACITY))) and user_in_game_name:
-            extra_list.append(order_of_extra_reaction_add, user_in_game_name)
+            extra_list[user_in_game_name] = order_of_extra_reaction_add
 
 
 # Triggers when message in channel has ✅ removed from message
@@ -151,10 +151,10 @@ async def on_reaction_remove(reaction, user):
             # need to check if user_in_game_name is not null
             if user_in_game_name:
                 update_cell(user_in_game_name, current_nw_weekday, 'FALSE')
-                normal_list.pop(order_of_reaction_add, user_in_game_name)
+                del normal_list[user_in_game_name]
         elif ((check_todays_attendance_in_sheets(current_nw_weekday) >=
                int(NODE_CAPACITY))) and user_in_game_name:
-            extra_list.pop(order_of_extra_reaction_add, user_in_game_name)
+            del extra_list[user_in_game_name]
 
 
 # Handler for command errors
