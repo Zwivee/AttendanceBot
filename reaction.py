@@ -37,6 +37,7 @@ NODE_CAPACITY_RESET_TIMER = 24  # in hours
 HOUR_OF_DAY_TO_RESET = 18  # military time
 MINUTE_OF_HOUR_TO_RESET = 00
 extra_list = []
+normal_list = []
 current_nw_weekday = None
 MONDAY = worksheet.find("Mon").col
 TUESDAY = worksheet.find("Tue").col
@@ -44,6 +45,9 @@ WEDNESDAY = worksheet.find("Wed").col
 THURSDAY = worksheet.find("Thr").col
 FRIDAY = worksheet.find("Fri").col
 SUNDAY = worksheet.find("Sun").col
+last_successful_announcement = 0
+order_of_reaction_add = 1
+order_of_extra_reaction_add = 1
 
 
 # Bot started
@@ -61,7 +65,7 @@ def get_user(user):
         result = in_game_name[0]
         return result
     else:
-        print("Could not find the user from the string " + new_person)
+        print("Could not find the user from the string: " + new_person)
 
 
 # Find message date and give weekday in for of 0 Monday - 6 Sunday
@@ -96,7 +100,7 @@ def update_cell(in_game_name_update, target_weekday, status):
         whole_word_match_ign = re.compile(rf"\b{in_game_name_update}\b")
         cell = worksheet.find(whole_word_match_ign)
     except gspread.CellNotFound:
-        print("Cannot find name " + in_game_name_update)
+        print("Cannot find name: " + in_game_name_update)
     else:
         worksheet.update_cell(cell.row, target_weekday, status)
 
@@ -116,6 +120,12 @@ async def on_reaction_add(reaction, user):
     user_in_game_name = get_user(user)
     global current_nw_weekday
     current_nw_weekday = calculate_weekday_from_announcement(reaction)
+
+    if current_nw_weekday != last_successful_announcement:
+        extra_list.clear()
+        normal_list.clear()
+        order_of_reaction_add = 1
+        order_of_extra_reaction_add = 1
     # Check if officer posting did not place date in announcement
     if current_nw_weekday is not None:
         # need to check if user_in_game_name is not null
@@ -123,9 +133,10 @@ async def on_reaction_add(reaction, user):
                 check_todays_attendance_in_sheets(current_nw_weekday) <
                 int(NODE_CAPACITY)) and user_in_game_name:
             update_cell(user_in_game_name, current_nw_weekday, 'TRUE')
+            normal_list.append(order_of_reaction_add, user_in_game_name)
         elif ((check_todays_attendance_in_sheets(current_nw_weekday) >=
                int(NODE_CAPACITY))) and user_in_game_name:
-            extra_list.append(user_in_game_name)
+            extra_list.append(order_of_extra_reaction_add, user_in_game_name)
 
 
 # Triggers when message in channel has ✅ removed from message
@@ -140,9 +151,10 @@ async def on_reaction_remove(reaction, user):
             # need to check if user_in_game_name is not null
             if user_in_game_name:
                 update_cell(user_in_game_name, current_nw_weekday, 'FALSE')
+                normal_list.pop(order_of_reaction_add, user_in_game_name)
         elif ((check_todays_attendance_in_sheets(current_nw_weekday) >=
                int(NODE_CAPACITY))) and user_in_game_name:
-            extra_list.pop(user_in_game_name)
+            extra_list.pop(order_of_extra_reaction_add, user_in_game_name)
 
 
 # Handler for command errors
