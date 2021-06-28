@@ -33,14 +33,17 @@ MAX_ATTENDANCE = 100
 global NODE_CAPACITY
 NODE_CAPACITY = MAX_ATTENDANCE
 COL_CONTAIN_IN_GAMES = 2
-MON_TO_FRI_OFFSET = 11
-SUNDAY_OFFSET = 10
-SUNDAY = 6
 NODE_CAPACITY_RESET_TIMER = 24  # in hours
 HOUR_OF_DAY_TO_RESET = 18  # military time
 MINUTE_OF_HOUR_TO_RESET = 00
 extra_list = []
 current_nw_weekday = None
+MONDAY = worksheet.find("Mon").col
+TUESDAY = worksheet.find("Tue").col
+WEDNESDAY = worksheet.find("Wed").col
+THURSDAY = worksheet.find("Thr").col
+FRIDAY = worksheet.find("Fri").col
+SUNDAY = worksheet.find("Sun").col
 
 
 # Bot started
@@ -56,9 +59,9 @@ def get_user(user):
     in_game_name = re.findall(pattern, new_person, re.IGNORECASE)
     if in_game_name:
         result = in_game_name[0]
+        return result
     else:
         print("Could not find the user from the string " + new_person)
-    return result
 
 
 # Find message date and give weekday in for of 0 Monday - 6 Sunday
@@ -68,7 +71,21 @@ def calculate_weekday_from_announcement(reaction):
     if match is not None:
         nw_weekday = datetime.datetime.strptime(match.group(),
                                                 '%m/%d/%y').date().weekday()
-        return nw_weekday
+
+    if nw_weekday == 0:
+        return MONDAY
+    elif nw_weekday == 1:
+        return TUESDAY
+    elif nw_weekday == 2:
+        return WEDNESDAY
+    elif nw_weekday == 3:
+        return THURSDAY
+    elif nw_weekday == 4:
+        return FRIDAY
+    elif nw_weekday == 6:
+        return SUNDAY
+    else:
+        return "Error: Cannot find day"
 
 
 # Find the cell in google sheet that matches
@@ -81,27 +98,14 @@ def update_cell(in_game_name_update, target_weekday, status):
     except gspread.CellNotFound:
         print("Cannot find name " + in_game_name_update)
     else:
-        # Since we do not node war on Saturday the sheet is missing a column
-        # and therefore sunday must be calculated with an offset
-        if target_weekday != SUNDAY:
-            worksheet.update_cell(cell.row, target_weekday + MON_TO_FRI_OFFSET,
-                                  status)
-        else:
-            worksheet.update_cell(cell.row, target_weekday + SUNDAY_OFFSET,
-                                  status)
+        worksheet.update_cell(cell.row, target_weekday, status)
 
 
 # Since we do not node war on Saturday the sheet is missing a column
 # and therefore sunday must be calculated with an offset.
 def check_todays_attendance_in_sheets(target_nw_weekday_to_check):
-    if target_nw_weekday_to_check != SUNDAY:
-        current_attendance = worksheet.cell(
-            COL_CONTAIN_IN_GAMES,
-            target_nw_weekday_to_check + MON_TO_FRI_OFFSET).value
-    else:
-        current_attendance = worksheet.cell(
-            COL_CONTAIN_IN_GAMES,
-            target_nw_weekday_to_check + SUNDAY_OFFSET).value
+    current_attendance = worksheet.cell(COL_CONTAIN_IN_GAMES,
+                                        target_nw_weekday_to_check).value
     return int(current_attendance)
 
 
@@ -114,12 +118,13 @@ async def on_reaction_add(reaction, user):
     current_nw_weekday = calculate_weekday_from_announcement(reaction)
     # Check if officer posting did not place date in announcement
     if current_nw_weekday is not None:
+        # need to check if user_in_game_name is not null
         if (reaction.emoji == '✅') and (
                 check_todays_attendance_in_sheets(current_nw_weekday) <
-                int(NODE_CAPACITY)):
+                int(NODE_CAPACITY)) and user_in_game_name:
             update_cell(user_in_game_name, current_nw_weekday, 'TRUE')
         elif ((check_todays_attendance_in_sheets(current_nw_weekday) >=
-               int(NODE_CAPACITY))):
+               int(NODE_CAPACITY))) and user_in_game_name:
             extra_list.append(user_in_game_name)
 
 
@@ -132,9 +137,11 @@ async def on_reaction_remove(reaction, user):
         current_nw_weekday = calculate_weekday_from_announcement(reaction)
         # Check if officer posting did not place date in announcement
         if current_nw_weekday is not None:
-            update_cell(user_in_game_name, current_nw_weekday, 'FALSE')
+            # need to check if user_in_game_name is not null
+            if user_in_game_name:
+                update_cell(user_in_game_name, current_nw_weekday, 'FALSE')
         elif ((check_todays_attendance_in_sheets(current_nw_weekday) >=
-               int(NODE_CAPACITY))):
+               int(NODE_CAPACITY))) and user_in_game_name:
             extra_list.pop(user_in_game_name)
 
 
