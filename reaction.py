@@ -214,8 +214,8 @@ async def current(ctx):
 @bot.command(pass_context=True)
 @commands.has_permissions(administrator=True)
 async def waitlist(ctx):
-    for users in extra_list:
-        print_list = users + ","
+    for user, order in extra_list:
+        print_list = order + ". " + user + ", "
     if not extra_list:
         await ctx.channel.send('None')
     else:
