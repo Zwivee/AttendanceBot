@@ -33,11 +33,8 @@ MAX_ATTENDANCE = 100
 global NODE_CAPACITY
 NODE_CAPACITY = MAX_ATTENDANCE
 COL_CONTAIN_IN_GAMES = 2
-NODE_CAPACITY_RESET_TIMER = 24  # in hours
-HOUR_OF_DAY_TO_RESET = 18  # military time
-MINUTE_OF_HOUR_TO_RESET = 00
-extra_list = {}
-normal_list = {}
+extra_list = []
+normal_list = []
 current_nw_weekday = None
 MONDAY = worksheet.find("Mon").col
 TUESDAY = worksheet.find("Tue").col
@@ -46,8 +43,6 @@ THURSDAY = worksheet.find("Thr").col
 FRIDAY = worksheet.find("Fri").col
 SUNDAY = worksheet.find("Sun").col
 last_successful_announcement = 0
-order_of_reaction_add = 1
-order_of_extra_reaction_add = 1
 
 
 # Bot started
@@ -124,8 +119,6 @@ async def on_reaction_add(reaction, user):
     if current_nw_weekday != last_successful_announcement:
         extra_list.clear()
         normal_list.clear()
-        order_of_reaction_add = 1
-        order_of_extra_reaction_add = 1
     # Check if officer posting did not place date in announcement
     if current_nw_weekday is not None:
         # need to check if user_in_game_name is not null
@@ -133,10 +126,10 @@ async def on_reaction_add(reaction, user):
                 check_todays_attendance_in_sheets(current_nw_weekday) <
                 int(NODE_CAPACITY)) and user_in_game_name:
             update_cell(user_in_game_name, current_nw_weekday, 'TRUE')
-            normal_list[user_in_game_name] = order_of_reaction_add
+            normal_list.append(user_in_game_name)
         elif ((check_todays_attendance_in_sheets(current_nw_weekday) >=
                int(NODE_CAPACITY))) and user_in_game_name:
-            extra_list[user_in_game_name] = order_of_extra_reaction_add
+            extra_list.append(user_in_game_name)
 
 
 # Triggers when message in channel has ✅ removed from message
@@ -149,12 +142,13 @@ async def on_reaction_remove(reaction, user):
         # Check if officer posting did not place date in announcement
         if current_nw_weekday is not None:
             # need to check if user_in_game_name is not null
-            if user_in_game_name:
+            if (check_todays_attendance_in_sheets(current_nw_weekday) <
+                    int(NODE_CAPACITY)) and user_in_game_name:
                 update_cell(user_in_game_name, current_nw_weekday, 'FALSE')
-                del normal_list[user_in_game_name]
-        elif ((check_todays_attendance_in_sheets(current_nw_weekday) >=
-               int(NODE_CAPACITY))) and user_in_game_name:
-            del extra_list[user_in_game_name]
+                normal_list.remove(user_in_game_name)
+            elif ((check_todays_attendance_in_sheets(current_nw_weekday) >=
+                   int(NODE_CAPACITY))) and user_in_game_name:
+                extra_list.remove(user_in_game_name)
 
 
 # Handler for command errors
@@ -214,8 +208,8 @@ async def current(ctx):
 @bot.command(pass_context=True)
 @commands.has_permissions(administrator=True)
 async def waitlist(ctx):
-    for user, order in extra_list:
-        print_list = order + ". " + user + ", "
+    for user in extra_list:
+        print_list = user + ","
     if not extra_list:
         await ctx.channel.send('None')
     else:
