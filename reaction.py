@@ -1,7 +1,6 @@
 import os
 import re
 import datetime
-import asyncio
 import discord
 import gspread
 
@@ -71,20 +70,20 @@ def calculate_weekday_from_announcement(reaction):
         nw_weekday = datetime.datetime.strptime(match.group(),
                                                 '%m/%d/%y').date().weekday()
 
-    if nw_weekday == 0:
-        return MONDAY
-    elif nw_weekday == 1:
-        return TUESDAY
-    elif nw_weekday == 2:
-        return WEDNESDAY
-    elif nw_weekday == 3:
-        return THURSDAY
-    elif nw_weekday == 4:
-        return FRIDAY
-    elif nw_weekday == 6:
-        return SUNDAY
-    else:
-        return "Error: Cannot find day"
+        if nw_weekday == 0:
+            return MONDAY
+        elif nw_weekday == 1:
+            return TUESDAY
+        elif nw_weekday == 2:
+            return WEDNESDAY
+        elif nw_weekday == 3:
+            return THURSDAY
+        elif nw_weekday == 4:
+            return FRIDAY
+        elif nw_weekday == 6:
+            return SUNDAY
+        else:
+            return "Error: Cannot find day"
 
 
 # Find the cell in google sheet that matches
