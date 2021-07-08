@@ -190,6 +190,7 @@ async def cap(ctx, capacity_setting):
                     int(NODE_CAPACITY)):
                 update_cell(users, current_nw_weekday, 'TRUE')
                 extra_list.remove(users)
+                normal_list.append(users)
     except IndexError:
         print("Cap changed, but extra list is empty")
     # Reply with message and new capacity set
