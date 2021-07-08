@@ -141,12 +141,11 @@ async def on_reaction_remove(reaction, user):
         # Check if officer posting did not place date in announcement
         if current_nw_weekday is not None:
             # need to check if user_in_game_name is not null
-            try:
-                if user_in_game_name:
-                    update_cell(user_in_game_name, current_nw_weekday, 'FALSE')
+            if user_in_game_name:
+                update_cell(user_in_game_name, current_nw_weekday, 'FALSE')
+                if user_in_game_name in normal_list:
                     normal_list.remove(user_in_game_name)
-            except:
-                if user_in_game_name:
+                else:
                     extra_list.remove(user_in_game_name)
 
 
