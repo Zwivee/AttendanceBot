@@ -96,7 +96,7 @@ def update_cell(in_game_name_update, target_weekday, status):
     try:
         # \b binds results to whole words, and used built in ignore case method
         whole_word_match_ign = re.compile(rf"\b{in_game_name_update}\b")
-        cell = worksheet.find(whole_word_match_ign,in_column=2)
+        cell = worksheet.find(whole_word_match_ign, in_column=2)
     except gspread.CellNotFound:
         print("Cannot find name: " + in_game_name_update)
     else:
@@ -238,6 +238,7 @@ async def help(ctx):
 
 # Part of help command group expand on the help command
 # Will not return base help command, but will instead return declared embed
+# Describes the kill command
 @help.command()
 async def kill(ctx):
     embed_result = discord.Embed(title="kill",
@@ -249,6 +250,7 @@ async def kill(ctx):
 
 # Part of help command group expand on the help command
 # Will not return base help command, but will instead return declared embed
+# Describes the cap command
 @help.command()
 async def cap(ctx):
     embed_result = discord.Embed(
@@ -261,6 +263,9 @@ async def cap(ctx):
     await ctx.send(embed=embed_result)
 
 
+# Part of help command group expand on the help command
+# Will not return base help command, but will instead return declared embed
+# Describes the current command
 @help.command()
 async def current(ctx):
     embed_result = discord.Embed(
@@ -271,6 +276,9 @@ async def current(ctx):
     await ctx.send(embed=embed_result)
 
 
+# Part of help command group expand on the help command
+# Will not return base help command, but will instead return declared embed
+# Describes the waitlist command
 @help.command()
 async def waitlist(ctx):
     embed_result = discord.Embed(
