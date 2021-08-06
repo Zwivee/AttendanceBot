@@ -96,7 +96,7 @@ def update_cell(in_game_name_update, target_weekday, status):
     try:
         # \b binds results to whole words, and used built in ignore case method
         whole_word_match_ign = re.compile(rf"\b{in_game_name_update}\b")
-        cell = worksheet.find(whole_word_match_ign)
+        cell = worksheet.find(whole_word_match_ign,in_column=2)
     except gspread.CellNotFound:
         print("Cannot find name: " + in_game_name_update)
     else:
