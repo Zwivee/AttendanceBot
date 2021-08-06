@@ -1,3 +1,4 @@
+from calendar import SATURDAY
 import os
 import re
 import datetime
@@ -31,7 +32,7 @@ worksheet = sh.worksheet('Master List')
 MAX_ATTENDANCE = 100
 global NODE_CAPACITY
 NODE_CAPACITY = MAX_ATTENDANCE
-COL_CONTAIN_IN_GAMES = 2
+COL_CONTAIN_IN_GAME_NAMES = 2
 extra_list = []
 normal_list = []
 current_nw_weekday = None
@@ -40,6 +41,7 @@ TUESDAY = worksheet.find("Tue").col
 WEDNESDAY = worksheet.find("Wed").col
 THURSDAY = worksheet.find("Thr").col
 FRIDAY = worksheet.find("Fri").col
+SATURDAY = worksheet.find("Sat").col
 SUNDAY = worksheet.find("Sun").col
 last_successful_announcement = 0
 
@@ -80,6 +82,8 @@ def calculate_weekday_from_announcement(reaction):
             return THURSDAY
         elif nw_weekday == 4:
             return FRIDAY
+        elif nw_weekday == 5:
+            return SATURDAY
         elif nw_weekday == 6:
             return SUNDAY
         else:
@@ -102,7 +106,7 @@ def update_cell(in_game_name_update, target_weekday, status):
 # Since we do not node war on Saturday the sheet is missing a column
 # and therefore sunday must be calculated with an offset.
 def check_todays_attendance_in_sheets(target_nw_weekday_to_check):
-    current_attendance = worksheet.cell(COL_CONTAIN_IN_GAMES,
+    current_attendance = worksheet.cell(COL_CONTAIN_IN_GAME_NAMES,
                                         target_nw_weekday_to_check).value
     return int(current_attendance)
 
@@ -143,9 +147,10 @@ async def on_reaction_remove(reaction, user):
             # need to check if user_in_game_name is not null
             if user_in_game_name:
                 update_cell(user_in_game_name, current_nw_weekday, 'FALSE')
+
                 if user_in_game_name in normal_list:
                     normal_list.remove(user_in_game_name)
-                else:
+                elif user_in_game_name in extra_list:
                     extra_list.remove(user_in_game_name)
 
 
@@ -154,7 +159,7 @@ async def on_reaction_remove(reaction, user):
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         return
-    if isinstance(error, commands.MissingRequiredArgument):
+    if isinstance(error, commands.errors.MissingRequiredArgument):
         await ctx.send("Missing a required argument. Do !help")
     if isinstance(error, commands.MissingPermissions):
         await ctx.send(
