@@ -67,7 +67,8 @@ def get_user(user):
 # Find message date and give weekday in for of 0 Monday - 6 Sunday
 def calculate_weekday_from_announcement(reaction):
     message = reaction.message.content
-    match = re.search(r'\d{1}/\d{2}/\d{2}', message)
+    # Matches format of date as {1 or 2 digit} day, {1 or 2 digit month}, 2 digit year
+    match = re.search(r'\d{1,2}/\d{1,2}/\d{2}', message)
     if match is not None:
         nw_weekday = datetime.datetime.strptime(match.group(),
                                                 '%m/%d/%y').date().weekday()
