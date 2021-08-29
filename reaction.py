@@ -26,8 +26,6 @@ sh = gc.open_by_key(SHEET)
 worksheet = sh.worksheet('Master List')
 
 # Global settings
-# Currently if we want to restrain the number of people
-# that can be checked, but this will become obsolete when uncapped begins
 MAX_ATTENDANCE = 100
 global NODE_CAPACITY
 NODE_CAPACITY = MAX_ATTENDANCE
@@ -103,8 +101,7 @@ def update_cell(in_game_name_update, target_weekday, status):
         worksheet.update_cell(cell.row, target_weekday, status)
 
 
-# Since we do not node war on Saturday the sheet is missing a column
-# and therefore sunday must be calculated with an offset.
+# Checks the second row to determine the current attendance
 def check_todays_attendance_in_sheets(target_nw_weekday_to_check):
     current_attendance = worksheet.cell(COL_CONTAIN_IN_GAME_NAMES,
                                         target_nw_weekday_to_check).value
@@ -112,6 +109,7 @@ def check_todays_attendance_in_sheets(target_nw_weekday_to_check):
 
 
 @bot.event
+# Handler for the addition of reaction to a message. Whether the bot was on or not the reaction will be tracked in the current week on the sheet.
 async def on_raw_reaction_add(payload):
     user_in_game_name = get_user(payload.member)
     channel = bot.get_channel(payload.channel_id)
@@ -120,6 +118,7 @@ async def on_raw_reaction_add(payload):
     global current_nw_weekday
     current_nw_weekday = calculate_weekday_from_announcement(message_content)
 
+    # When the day that the reaction is being added to is different it means the war day has changed and the lists are no longer valid.
     if current_nw_weekday != last_successful_announcement:
         extra_list.clear()
         normal_list.clear()
@@ -134,6 +133,9 @@ async def on_raw_reaction_add(payload):
         elif ((check_todays_attendance_in_sheets(current_nw_weekday) >=
                int(NODE_CAPACITY))) and user_in_game_name:
             extra_list.append(user_in_game_name)
+
+        global last_successful_announcement
+        last_successful_announcement = current_nw_weekday
 
 
 # Triggers when message in channel has ✅ removed from message
