@@ -46,7 +46,7 @@ Select your server and invite the bot.
 
 ## Features
 
-List of current features in v2.1.3
+List of current features in v2.2.0.0
 
 - Keep track of ✅ reactions on discord only.
 - Record reactions on Google Sheet using Google API v4.
