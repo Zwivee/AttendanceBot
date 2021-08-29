@@ -53,8 +53,6 @@ List of current features in v2.1.3
 - Command !cap changes the cap on the amount of reactions accepted by the bot.
 - Members past cap will be added to waitlist.
 - On cap being raised, all members on waitlist will be added to sheet.
-- Reset cap command every day at 6pm PST.
-- Search for names ignoring case and only returns whole word results
 - Custom help command
 
 ## Contact
