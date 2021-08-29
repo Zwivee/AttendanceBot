@@ -16,8 +16,7 @@ PREFIX = '!'
 
 # Initialization discord
 intents = discord.Intents.default()
-intents.reactions = True
-intents.members = True
+intents.all()
 bot = commands.Bot(command_prefix=PREFIX, intents=intents)
 bot.remove_command('help')
 
@@ -65,10 +64,9 @@ def get_user(user):
 
 
 # Find message date and give weekday in for of 0 Monday - 6 Sunday
-def calculate_weekday_from_announcement(reaction):
-    message = reaction.message.content
+def calculate_weekday_from_announcement(message_content):
     # Matches format of date as {1 or 2 digit} day, {1 or 2 digit month}, 2 digit year
-    match = re.search(r'\d{1,2}/\d{1,2}/\d{2}', message)
+    match = re.search(r'\d{1,2}/\d{1,2}/\d{2}', message_content)
     if match is not None:
         nw_weekday = datetime.datetime.strptime(match.group(),
                                                 '%m/%d/%y').date().weekday()
@@ -87,6 +85,7 @@ def calculate_weekday_from_announcement(reaction):
             return SATURDAY
         elif nw_weekday == 6:
             return SUNDAY
+
         else:
             return "Error: Cannot find day"
 
@@ -112,13 +111,14 @@ def check_todays_attendance_in_sheets(target_nw_weekday_to_check):
     return int(current_attendance)
 
 
-# Triggers when message in channel has ✅ added from message
-# Reads the date and updates the correct cell in google sheets.
 @bot.event
-async def on_reaction_add(reaction, user):
-    user_in_game_name = get_user(user)
+async def on_raw_reaction_add(payload):
+    user_in_game_name = get_user(payload.member)
+    channel = bot.get_channel(payload.channel_id)
+    message = await channel.fetch_message(payload.message_id)
+    message_content = message.content
     global current_nw_weekday
-    current_nw_weekday = calculate_weekday_from_announcement(reaction)
+    current_nw_weekday = calculate_weekday_from_announcement(message_content)
 
     if current_nw_weekday != last_successful_announcement:
         extra_list.clear()
@@ -126,7 +126,7 @@ async def on_reaction_add(reaction, user):
     # Check if officer posting did not place date in announcement
     if current_nw_weekday is not None:
         # need to check if user_in_game_name is not null
-        if (reaction.emoji == '✅') and (
+        if (payload.emoji.name == "✅") and (
                 check_todays_attendance_in_sheets(current_nw_weekday) <
                 int(NODE_CAPACITY)) and user_in_game_name:
             update_cell(user_in_game_name, current_nw_weekday, 'TRUE')
@@ -139,10 +139,17 @@ async def on_reaction_add(reaction, user):
 # Triggers when message in channel has ✅ removed from message
 # Reads the date and updates the correct cell in google sheets.
 @bot.event
-async def on_reaction_remove(reaction, user):
-    if reaction.emoji == '✅':
-        user_in_game_name = get_user(user)
-        current_nw_weekday = calculate_weekday_from_announcement(reaction)
+async def on_raw_reaction_remove(payload):
+    if payload.emoji.name == "✅":
+        # Search for member when removing reaction
+        guild = await bot.fetch_guild(payload.guild_id)
+        member = await guild.fetch_member(payload.user_id)
+        user_in_game_name = get_user(member)
+        channel = bot.get_channel(payload.channel_id)
+        message = await channel.fetch_message(payload.message_id)
+        message_content = message.content
+        current_nw_weekday = calculate_weekday_from_announcement(
+            message_content)
         # Check if officer posting did not place date in announcement
         if current_nw_weekday is not None:
             # need to check if user_in_game_name is not null
