@@ -170,8 +170,8 @@ async def on_raw_reaction_remove(payload):
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         return
-    if isinstance(error, commands.errors.MissingRequiredArgument):
-        await ctx.send("Missing a required argument. Do !help" +
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Missing a required argument. {error.param}" +
                        datetime.datetime.now().date())
     if isinstance(error, commands.MissingPermissions):
         await ctx.send(
