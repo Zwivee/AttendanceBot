@@ -188,9 +188,9 @@ async def on_command_error(ctx, error):
 # Command !kill that can only be used by server administrators to stop the bot
 @bot.command(pass_context=True, alias=["quit"])
 @commands.has_permissions(administrator=True)
-async def kill():
+async def kill(ctx):
     # Allow any server administrators to kill the bottom
-    await bot.close()
+    await ctx.bot.close()
     print('Bot is logged out')
 
 
