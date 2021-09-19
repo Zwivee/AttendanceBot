@@ -315,5 +315,18 @@ async def waitlist(ctx):
     await ctx.send(embed=embed_result)
 
 
+# Part of help command group expand on the help command
+# Will not return base help command, but will instead return declared embed
+# Describes the waitlist command
+@help.command()
+async def currattendance(ctx):
+    embed_result = discord.Embed(
+        title="current attendance",
+        description="Shows list of people currently signed up for war)",
+        color=ctx.author.color)
+
+    await ctx.send(embed=embed_result)
+
+
 # Run bot
 bot.run(TOKEN)
