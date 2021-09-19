@@ -96,7 +96,8 @@ def update_cell(in_game_name_update, target_weekday, status):
         whole_word_match_ign = re.compile(rf"\b{in_game_name_update}\b")
         cell = worksheet.find(whole_word_match_ign, in_column=2)
     except gspread.CellNotFound:
-        print("Cannot find name: " + in_game_name_update)
+        print("Cannot find name: " + in_game_name_update +
+              datetime.datetime.now().date())
     else:
         worksheet.update_cell(cell.row, target_weekday, status)
 
@@ -170,15 +171,18 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         return
     if isinstance(error, commands.errors.MissingRequiredArgument):
-        await ctx.send("Missing a required argument. Do !help")
+        await ctx.send("Missing a required argument. Do !help" +
+                       datetime.datetime.now().date())
     if isinstance(error, commands.MissingPermissions):
         await ctx.send(
-            "You do not have the appropriate permissions to run this command.")
+            "You do not have the appropriate permissions to run this command."
+            + datetime.datetime.now().date())
     if isinstance(error, commands.BotMissingPermissions):
-        await ctx.send("I don't have sufficient permissions!")
+        await ctx.send("I don't have sufficient permissions!" +
+                       datetime.datetime.now().date())
     else:
         print("Error not caught")
-        print(error)
+        print(error + datetime.datetime.now().date())
 
 
 # Command !kill that can only be used by server administrators to stop the bot
@@ -228,6 +232,17 @@ async def waitlist(ctx):
         await ctx.channel.send('None')
     else:
         await ctx.channel.send('Extra members: {}'.format(print_list))
+
+
+@bot.command(pass_context=True)
+@commands.has_permissions(administrator=True)
+async def currattendance(ctx):
+    for user in normal_list:
+        print_list = user + ","
+    if not normal_list:
+        await ctx.channel.send('None')
+    else:
+        await ctx.channel.send('Current Attendance: {}'.format(print_list))
 
 
 # Starts a command group for the help command
