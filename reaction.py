@@ -12,7 +12,7 @@ from discord.ext import commands, tasks
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 SHEET = os.getenv('SHEET_ID')
-PREFIX = '!'
+PREFIX = '%'
 
 # Initialization discord
 intents = discord.Intents.default()
