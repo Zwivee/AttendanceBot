@@ -17,7 +17,7 @@ PREFIX = '%'
 # Initialization discord
 intents = discord.Intents.default()
 intents.all()
-bot = commands.Bot(command_prefix=PREFIX, intents=intents)
+bot = commands.Bot(command_prefix=commands.when_mentioned, intents=intents)
 bot.remove_command('help')
 
 # Initialize gspread
