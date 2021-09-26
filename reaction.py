@@ -128,6 +128,7 @@ async def on_raw_reaction_add(payload):
     current_nw_weekday = calculate_weekday_from_announcement(message_content)
 
     # When the day that the reaction is being added to is different it means the war day has changed and the lists are no longer valid.
+    global last_successful_announcement
     if current_nw_weekday != last_successful_announcement:
         extra_list.clear()
         normal_list.clear()
@@ -143,7 +144,6 @@ async def on_raw_reaction_add(payload):
                int(NODE_CAPACITY))) and user_in_game_name:
             extra_list.append(user_in_game_name)
 
-        global last_successful_announcement
         last_successful_announcement = current_nw_weekday
 
 
