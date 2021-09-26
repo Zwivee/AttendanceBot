@@ -54,7 +54,7 @@ async def on_ready():
 
 
 # Name of user that added reacted to message
-async def get_user(user):
+def get_user(user):
     new_person = user.display_name
     pattern = '''"([^"]*)"'''
     in_game_name = re.findall(pattern, new_person, re.IGNORECASE)
@@ -62,9 +62,8 @@ async def get_user(user):
         result = in_game_name[0]
         return result
     else:
-        await error_channel.send(person_to_contact_for_error +
-                                 "User not following the naming standard: " +
-                                 new_person)
+        send_error_message("User not following the naming standard: " +
+                           new_person)
 
 
 # Find message date and give weekday in for of 0 Monday - 6 Sunday
@@ -96,16 +95,15 @@ def calculate_weekday_from_announcement(message_content):
 
 # Find the cell in google sheet that matches
 # inGameName and try to update the correct day
-async def update_cell(in_game_name_update, target_weekday, status):
+def update_cell(in_game_name_update, target_weekday, status):
     try:
         # \b binds results to whole words, and used built in ignore case method
         whole_word_match_ign = re.compile(rf"\b{in_game_name_update}\b")
         cell = worksheet.find(whole_word_match_ign, in_column=2)
     except gspread.CellNotFound:
-        await error_channel.send(person_to_contact_for_error +
-                                 "No name on Sheet matching: " +
-                                 in_game_name_update +
-                                 datetime.datetime.now().date())
+        send_error_message("No name on Sheet matching: " +
+                           in_game_name_update +
+                           datetime.datetime.now().date())
     else:
         worksheet.update_cell(cell.row, target_weekday, status)
 
@@ -115,6 +113,10 @@ def check_todays_attendance_in_sheets(target_nw_weekday_to_check):
     current_attendance = worksheet.cell(COL_CONTAIN_IN_GAME_NAMES,
                                         target_nw_weekday_to_check).value
     return int(current_attendance)
+
+
+async def send_error_message(message):
+    await error_channel.send(person_to_contact_for_error + message)
 
 
 @bot.event
