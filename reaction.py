@@ -41,6 +41,9 @@ FRIDAY = worksheet.find("Fri").col
 SATURDAY = worksheet.find("Sat").col
 SUNDAY = worksheet.find("Sun").col
 last_successful_announcement = 0
+discord_error_logging_channel = 205033782129065984
+error_channel = bot.get_channel(discord_error_logging_channel)
+person_to_contact_for_error = '<@107937911701241856>'
 
 
 # Bot started
@@ -50,7 +53,7 @@ async def on_ready():
 
 
 # Name of user that added reacted to message
-def get_user(user):
+async def get_user(user):
     new_person = user.display_name
     pattern = '''"([^"]*)"'''
     in_game_name = re.findall(pattern, new_person, re.IGNORECASE)
@@ -58,7 +61,9 @@ def get_user(user):
         result = in_game_name[0]
         return result
     else:
-        print("Could not find the user from the string: " + new_person)
+        await error_channel.send(person_to_contact_for_error +
+                                 "User not following the naming standard: " +
+                                 new_person)
 
 
 # Find message date and give weekday in for of 0 Monday - 6 Sunday
@@ -90,14 +95,16 @@ def calculate_weekday_from_announcement(message_content):
 
 # Find the cell in google sheet that matches
 # inGameName and try to update the correct day
-def update_cell(in_game_name_update, target_weekday, status):
+async def update_cell(in_game_name_update, target_weekday, status):
     try:
         # \b binds results to whole words, and used built in ignore case method
         whole_word_match_ign = re.compile(rf"\b{in_game_name_update}\b")
         cell = worksheet.find(whole_word_match_ign, in_column=2)
     except gspread.CellNotFound:
-        print("Cannot find name: " + in_game_name_update +
-              datetime.datetime.now().date())
+        await error_channel.send(person_to_contact_for_error +
+                                 "No name on Sheet matching: " +
+                                 in_game_name_update +
+                                 datetime.datetime.now().date())
     else:
         worksheet.update_cell(cell.row, target_weekday, status)
 
