@@ -40,6 +40,7 @@ THURSDAY = worksheet.find("Thr").col
 FRIDAY = worksheet.find("Fri").col
 SATURDAY = worksheet.find("Sat").col
 SUNDAY = worksheet.find("Sun").col
+global last_successful_announcement
 last_successful_announcement = 0
 discord_error_logging_channel = 205033782129065984
 error_channel = bot.get_channel(discord_error_logging_channel)
