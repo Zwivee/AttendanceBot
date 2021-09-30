@@ -6,13 +6,12 @@ import discord
 import gspread
 
 from dotenv import load_dotenv
-from discord.ext import commands, tasks
+from discord.ext import commands
 
 # Load environment settings for discord token
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 SHEET = os.getenv('SHEET_ID')
-PREFIX = '%'
 
 # Initialization discord
 intents = discord.Intents.default()
@@ -43,6 +42,7 @@ SUNDAY = worksheet.find("Sun").col
 global last_successful_announcement
 last_successful_announcement = 0
 discord_error_logging_channel = 205033782129065984
+attendance_channel = 821573996750307399
 error_channel = bot.get_channel(discord_error_logging_channel)
 person_to_contact_for_error = '<@107937911701241856>'
 
@@ -122,22 +122,22 @@ async def send_error_message(message):
 @bot.event
 # Handler for the addition of reaction to a message. Whether the bot was on or not the reaction will be tracked in the current week on the sheet.
 async def on_raw_reaction_add(payload):
-    user_in_game_name = get_user(payload.member)
-    channel = bot.get_channel(payload.channel_id)
-    message = await channel.fetch_message(payload.message_id)
-    message_content = message.content
-    global current_nw_weekday
-    current_nw_weekday = calculate_weekday_from_announcement(message_content)
+    if payload.channel_id == attendance_channel:
+        user_in_game_name = get_user(payload.member)
+        channel = bot.get_channel(payload.channel_id)
+        message = await channel.fetch_message(payload.message_id)
+        message_content = message.content
+        global current_nw_weekday
+        current_nw_weekday = calculate_weekday_from_announcement(
+            message_content)
 
-    # When the day that the reaction is being added to is different it means the war day has changed and the lists are no longer valid.
-    global last_successful_announcement
-    if current_nw_weekday != last_successful_announcement:
-        extra_list.clear()
-        normal_list.clear()
-    # Check if officer posting did not place date in announcement
-    if current_nw_weekday is not None:
-        # need to check if user_in_game_name is not null
-        if (payload.emoji.name == "✅") and (
+        # When the day that the reaction is being added to is different it means the war day has changed and the lists are no longer valid.
+        global last_successful_announcement
+        if current_nw_weekday != last_successful_announcement:
+            extra_list.clear()
+            normal_list.clear()
+        # Check if officer posting did not place date in announcement
+        if current_nw_weekday is not None and (payload.emoji.name == "✅") and (
                 check_todays_attendance_in_sheets(current_nw_weekday) <
                 int(NODE_CAPACITY)) and user_in_game_name:
             update_cell(user_in_game_name, current_nw_weekday, 'TRUE')
@@ -146,14 +146,14 @@ async def on_raw_reaction_add(payload):
                int(NODE_CAPACITY))) and user_in_game_name:
             extra_list.append(user_in_game_name)
 
-        last_successful_announcement = current_nw_weekday
+            last_successful_announcement = current_nw_weekday
 
 
 # Triggers when message in channel has ✅ removed from message
 # Reads the date and updates the correct cell in google sheets.
 @bot.event
 async def on_raw_reaction_remove(payload):
-    if payload.emoji.name == "✅":
+    if payload.channel_id == attendance_channel and payload.emoji.name == "✅":
         # Search for member when removing reaction
         guild = await bot.fetch_guild(payload.guild_id)
         member = await guild.fetch_member(payload.user_id)
@@ -163,16 +163,14 @@ async def on_raw_reaction_remove(payload):
         message_content = message.content
         current_nw_weekday = calculate_weekday_from_announcement(
             message_content)
-        # Check if officer posting did not place date in announcement
-        if current_nw_weekday is not None:
-            # need to check if user_in_game_name is not null
-            if user_in_game_name:
-                update_cell(user_in_game_name, current_nw_weekday, 'FALSE')
+        # Check if officer posting did not place date in announcement and user_in_game is not null
+        if current_nw_weekday is not None and user_in_game_name:
+            update_cell(user_in_game_name, current_nw_weekday, 'FALSE')
 
-                if user_in_game_name in normal_list:
-                    normal_list.remove(user_in_game_name)
-                elif user_in_game_name in extra_list:
-                    extra_list.remove(user_in_game_name)
+            if user_in_game_name in normal_list:
+                normal_list.remove(user_in_game_name)
+            elif user_in_game_name in extra_list:
+                extra_list.remove(user_in_game_name)
 
 
 # Handler for command errors
