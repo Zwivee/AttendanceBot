@@ -42,7 +42,7 @@ SUNDAY = worksheet.find("Sun").col
 global last_successful_announcement
 last_successful_announcement = 0
 discord_error_logging_channel = 205033782129065984
-attendance_channel = 821573996750307399
+attendance_channel = 527381032832335873
 error_channel = bot.get_channel(discord_error_logging_channel)
 person_to_contact_for_error = '<@107937911701241856>'
 
