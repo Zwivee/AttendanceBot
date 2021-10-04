@@ -4,9 +4,9 @@ import re
 import datetime
 import discord
 import gspread
-
 from dotenv import load_dotenv
 from discord.ext import commands
+from datetime import datetime, timedelta
 
 # Load environment settings for discord token
 load_dotenv()
@@ -42,7 +42,8 @@ SUNDAY = worksheet.find("Sun").col
 global last_successful_announcement
 last_successful_announcement = 0
 discord_error_logging_channel = 205033782129065984
-attendance_channel = 527381032832335873
+attendance_channel = 821573996750307399
+#attendance_channel = 527381032832335873
 error_channel = bot.get_channel(discord_error_logging_channel)
 person_to_contact_for_error = '<@107937911701241856>'
 
@@ -66,13 +67,23 @@ def get_user(user):
                            new_person)
 
 
+def calculate_deadline_for_attendance(message_content):
+    match = re.search(r'\d{1,2}/\d{1,2}/\d{2}', message_content)
+    deadline_time_original = datetime.strptime(match.group(), '%m/%d/%y')
+    deadline_time_goal = "18:00"
+    deadline_time_obj = datetime.strptime(deadline_time_goal, '%H:%M')
+    deadline = deadline_time_original + timedelta(
+        hours=deadline_time_obj.hour, minutes=deadline_time_obj.minute)
+    return deadline
+
+
 # Find message date and give weekday in for of 0 Monday - 6 Sunday
 def calculate_weekday_from_announcement(message_content):
     # Matches format of date as {1 or 2 digit} day, {1 or 2 digit month}, 2 digit year
     match = re.search(r'\d{1,2}/\d{1,2}/\d{2}', message_content)
     if match is not None:
-        nw_weekday = datetime.datetime.strptime(match.group(),
-                                                '%m/%d/%y').date().weekday()
+        nw_weekday = datetime.strptime(match.group(),
+                                       '%m/%d/%y').date().weekday()
 
         if nw_weekday == 0:
             return MONDAY
@@ -102,8 +113,7 @@ def update_cell(in_game_name_update, target_weekday, status):
         cell = worksheet.find(whole_word_match_ign, in_column=2)
     except gspread.CellNotFound:
         send_error_message("No name on Sheet matching: " +
-                           in_game_name_update +
-                           datetime.datetime.now().date())
+                           in_game_name_update + datetime.now().date())
     else:
         worksheet.update_cell(cell.row, target_weekday, status)
 
@@ -127,26 +137,31 @@ async def on_raw_reaction_add(payload):
         channel = bot.get_channel(payload.channel_id)
         message = await channel.fetch_message(payload.message_id)
         message_content = message.content
-        global current_nw_weekday
-        current_nw_weekday = calculate_weekday_from_announcement(
-            message_content)
+        # Time already passed for this attendance
+        if datetime.now() <= calculate_deadline_for_attendance(
+                message_content):
+            global current_nw_weekday
+            current_nw_weekday = calculate_weekday_from_announcement(
+                message_content)
+            # When the day that the reaction is being added to is different it means the war day has changed and the lists are no longer valid.
+            global last_successful_announcement
+            if current_nw_weekday != last_successful_announcement:
+                extra_list.clear()
+                normal_list.clear()
+            # Check if officer posting did not place date in announcement
+            if current_nw_weekday is not None and (
+                    payload.emoji.name == "✅") and (
+                        check_todays_attendance_in_sheets(current_nw_weekday) <
+                        int(NODE_CAPACITY)) and user_in_game_name:
+                update_cell(user_in_game_name, current_nw_weekday, 'TRUE')
+                normal_list.append(user_in_game_name)
+            elif ((check_todays_attendance_in_sheets(current_nw_weekday) >=
+                   int(NODE_CAPACITY))) and user_in_game_name:
+                extra_list.append(user_in_game_name)
 
-        # When the day that the reaction is being added to is different it means the war day has changed and the lists are no longer valid.
-        global last_successful_announcement
-        if current_nw_weekday != last_successful_announcement:
-            extra_list.clear()
-            normal_list.clear()
-        # Check if officer posting did not place date in announcement
-        if current_nw_weekday is not None and (payload.emoji.name == "✅") and (
-                check_todays_attendance_in_sheets(current_nw_weekday) <
-                int(NODE_CAPACITY)) and user_in_game_name:
-            update_cell(user_in_game_name, current_nw_weekday, 'TRUE')
-            normal_list.append(user_in_game_name)
-        elif ((check_todays_attendance_in_sheets(current_nw_weekday) >=
-               int(NODE_CAPACITY))) and user_in_game_name:
-            extra_list.append(user_in_game_name)
-
-            last_successful_announcement = current_nw_weekday
+                last_successful_announcement = current_nw_weekday
+        else:
+            pass
 
 
 # Triggers when message in channel has ✅ removed from message
@@ -180,17 +195,17 @@ async def on_command_error(ctx, error):
         return
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send("Missing a required argument. {error.param}" +
-                       datetime.datetime.now().date())
+                       datetime.now().date())
     if isinstance(error, commands.MissingPermissions):
         await ctx.send(
             "You do not have the appropriate permissions to run this command."
-            + datetime.datetime.now().date())
+            + datetime.now().date())
     if isinstance(error, commands.BotMissingPermissions):
         await ctx.send("I don't have sufficient permissions!" +
-                       datetime.datetime.now().date())
+                       datetime.now().date())
     else:
         print("Error not caught")
-        print(error + datetime.datetime.now().date())
+        print(error + datetime.now().date())
 
 
 # Command !kill that can only be used by server administrators to stop the bot
