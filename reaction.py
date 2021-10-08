@@ -70,7 +70,7 @@ def get_user(user):
 def calculate_deadline_for_attendance(message_content):
     match = re.search(r'\d{1,2}/\d{1,2}/\d{2}', message_content)
     deadline_time_original = datetime.strptime(match.group(), '%m/%d/%y')
-    deadline_time_goal = "18:00"
+    deadline_time_goal = "21:15"
     deadline_time_obj = datetime.strptime(deadline_time_goal, '%H:%M')
     deadline = deadline_time_original + timedelta(
         hours=deadline_time_obj.hour, minutes=deadline_time_obj.minute)
