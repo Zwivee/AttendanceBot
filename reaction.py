@@ -1,4 +1,5 @@
 from calendar import SATURDAY
+from logging import error
 import os
 import re
 import datetime
@@ -44,7 +45,7 @@ last_successful_announcement = 0
 discord_error_logging_channel = 205033782129065984
 #attendance_channel = 821573996750307399
 attendance_channel = 527381032832335873
-error_channel = bot.get_channel(discord_error_logging_channel)
+#error_channel = bot.get_channel(discord_error_logging_channel)
 person_to_contact_for_error = '<@107937911701241856>'
 
 
@@ -55,7 +56,7 @@ async def on_ready():
 
 
 # Name of user that added reacted to message
-def get_user(user):
+async def get_user(user):
     new_person = user.display_name
     pattern = '''"([^"]*)"'''
     in_game_name = re.findall(pattern, new_person, re.IGNORECASE)
@@ -63,8 +64,8 @@ def get_user(user):
         result = in_game_name[0]
         return result
     else:
-        send_error_message("User not following the naming standard: " +
-                           new_person)
+        await send_error_message("User not following the naming standard: " +
+                                 new_person)
 
 
 def calculate_deadline_for_attendance(message_content):
@@ -107,13 +108,14 @@ def calculate_weekday_from_announcement(message_content):
 
 # Find the cell in google sheet that matches
 # inGameName and try to update the correct day
-def update_cell(in_game_name_update, target_weekday, status):
+async def update_cell(in_game_name_update, target_weekday, status):
     try:
         # \b binds results to whole words, and used built in ignore case method
         whole_word_match_ign = re.compile(rf"\b{in_game_name_update}\b")
         cell = worksheet.find(whole_word_match_ign, in_column=2)
     except gspread.CellNotFound:
-        send_error_message("No name on Sheet matching: " + in_game_name_update)
+        await send_error_message("No name on Sheet matching: " +
+                                 in_game_name_update)
     else:
         worksheet.update_cell(cell.row, target_weekday, status)
 
@@ -126,14 +128,15 @@ def check_todays_attendance_in_sheets(target_nw_weekday_to_check):
 
 
 async def send_error_message(message):
-    await error_channel.send(person_to_contact_for_error + message)
+    channel = bot.get_channel(discord_error_logging_channel)
+    await channel.send(person_to_contact_for_error + message)
 
 
 @bot.event
 # Handler for the addition of reaction to a message. Whether the bot was on or not the reaction will be tracked in the current week on the sheet.
 async def on_raw_reaction_add(payload):
     if payload.channel_id == attendance_channel:
-        user_in_game_name = get_user(payload.member)
+        user_in_game_name = await get_user(payload.member)
         channel = bot.get_channel(payload.channel_id)
         message = await channel.fetch_message(payload.message_id)
         message_content = message.content
@@ -153,7 +156,8 @@ async def on_raw_reaction_add(payload):
                     payload.emoji.name == "✅") and (
                         check_todays_attendance_in_sheets(current_nw_weekday) <
                         int(NODE_CAPACITY)) and user_in_game_name:
-                update_cell(user_in_game_name, current_nw_weekday, 'TRUE')
+                await update_cell(user_in_game_name, current_nw_weekday,
+                                  'TRUE')
                 normal_list.append(user_in_game_name)
             elif ((check_todays_attendance_in_sheets(current_nw_weekday) >=
                    int(NODE_CAPACITY))) and user_in_game_name:
@@ -183,7 +187,7 @@ async def on_raw_reaction_remove(payload):
             # Search for member when removing reaction
             guild = await bot.fetch_guild(payload.guild_id)
             member = await guild.fetch_member(payload.user_id)
-            user_in_game_name = get_user(member)
+            user_in_game_name = await get_user(member)
             channel = bot.get_channel(payload.channel_id)
             message = await channel.fetch_message(payload.message_id)
             message_content = message.content
@@ -191,7 +195,8 @@ async def on_raw_reaction_remove(payload):
                 message_content)
             # Check if officer posting did not place date in announcement and user_in_game is not null
             if current_nw_weekday is not None and user_in_game_name:
-                update_cell(user_in_game_name, current_nw_weekday, 'FALSE')
+                await update_cell(user_in_game_name, current_nw_weekday,
+                                  'FALSE')
 
                 if user_in_game_name in normal_list:
                     normal_list.remove(user_in_game_name)
@@ -241,7 +246,7 @@ async def cap(ctx, capacity_amount):
         for users in extra_list:
             if (check_todays_attendance_in_sheets(current_nw_weekday) <
                     int(NODE_CAPACITY)):
-                update_cell(users, current_nw_weekday, 'TRUE')
+                await update_cell(users, current_nw_weekday, 'TRUE')
                 extra_list.remove(users)
                 normal_list.append(users)
     except IndexError:
