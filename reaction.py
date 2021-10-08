@@ -112,8 +112,7 @@ def update_cell(in_game_name_update, target_weekday, status):
         whole_word_match_ign = re.compile(rf"\b{in_game_name_update}\b")
         cell = worksheet.find(whole_word_match_ign, in_column=2)
     except gspread.CellNotFound:
-        send_error_message("No name on Sheet matching: " +
-                           in_game_name_update + datetime.now().date())
+        send_error_message("No name on Sheet matching: " + in_game_name_update)
     else:
         worksheet.update_cell(cell.row, target_weekday, status)
 
@@ -161,6 +160,8 @@ async def on_raw_reaction_add(payload):
 
                 last_successful_announcement = current_nw_weekday
         else:
+            print("Someone tried to add reaction after deadline " +
+                  user_in_game_name)
             pass
 
 
@@ -169,23 +170,36 @@ async def on_raw_reaction_add(payload):
 @bot.event
 async def on_raw_reaction_remove(payload):
     if payload.channel_id == attendance_channel and payload.emoji.name == "✅":
-        # Search for member when removing reaction
-        guild = await bot.fetch_guild(payload.guild_id)
-        member = await guild.fetch_member(payload.user_id)
-        user_in_game_name = get_user(member)
+        get_user_from_payload = await bot.fetch_user(payload.user_id)
         channel = bot.get_channel(payload.channel_id)
         message = await channel.fetch_message(payload.message_id)
         message_content = message.content
-        current_nw_weekday = calculate_weekday_from_announcement(
-            message_content)
-        # Check if officer posting did not place date in announcement and user_in_game is not null
-        if current_nw_weekday is not None and user_in_game_name:
-            update_cell(user_in_game_name, current_nw_weekday, 'FALSE')
+        if datetime.now() <= calculate_deadline_for_attendance(
+                message_content):
+            global current_nw_weekday
+            current_nw_weekday = calculate_weekday_from_announcement(
+                message_content)
+            # Search for member when removing reaction
+            guild = await bot.fetch_guild(payload.guild_id)
+            member = await guild.fetch_member(payload.user_id)
+            user_in_game_name = get_user(member)
+            channel = bot.get_channel(payload.channel_id)
+            message = await channel.fetch_message(payload.message_id)
+            message_content = message.content
+            current_nw_weekday = calculate_weekday_from_announcement(
+                message_content)
+            # Check if officer posting did not place date in announcement and user_in_game is not null
+            if current_nw_weekday is not None and user_in_game_name:
+                update_cell(user_in_game_name, current_nw_weekday, 'FALSE')
 
-            if user_in_game_name in normal_list:
-                normal_list.remove(user_in_game_name)
-            elif user_in_game_name in extra_list:
-                extra_list.remove(user_in_game_name)
+                if user_in_game_name in normal_list:
+                    normal_list.remove(user_in_game_name)
+                elif user_in_game_name in extra_list:
+                    extra_list.remove(user_in_game_name)
+        else:
+            print("Someone tried to remove reaction after deadline " +
+                  get_user_from_payload.display_name)
+            pass
 
 
 # Handler for command errors
@@ -194,18 +208,15 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         return
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("Missing a required argument. {error.param}" +
-                       datetime.now().date())
+        await ctx.send("Missing a required argument. {} ".format(error))
     if isinstance(error, commands.MissingPermissions):
         await ctx.send(
-            "You do not have the appropriate permissions to run this command."
-            + datetime.now().date())
+            "You do not have the appropriate permissions to run this command.")
     if isinstance(error, commands.BotMissingPermissions):
-        await ctx.send("I don't have sufficient permissions!" +
-                       datetime.now().date())
+        await ctx.send("I don't have sufficient permissions!")
     else:
         print("Error not caught")
-        print(error + datetime.now().date())
+        print("{}".format(error))
 
 
 # Command !kill that can only be used by server administrators to stop the bot
@@ -220,10 +231,10 @@ async def kill(ctx):
 # Command !cap that can only be used by server administrators to change the node war cap
 @bot.command(pass_context=True)
 @commands.has_permissions(administrator=True)
-async def cap(ctx, capacity_setting):
+async def cap(ctx, capacity_amount):
     global NODE_CAPACITY
     global extra_list
-    NODE_CAPACITY = capacity_setting
+    NODE_CAPACITY = capacity_amount
     # Attempt to empty out extra list onto the sheet
     try:
         for users in extra_list:
