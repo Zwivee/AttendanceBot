@@ -2,12 +2,12 @@ from calendar import SATURDAY
 from logging import error
 import os
 import re
-import datetime
 import discord
 import gspread
 from dotenv import load_dotenv
 from discord.ext import commands
 from datetime import datetime, timedelta
+from pytz import timezone
 
 # Load environment settings for discord token
 load_dotenv()
@@ -69,10 +69,16 @@ async def get_user(user):
 
 
 def calculate_deadline_for_attendance(message_content):
+    zonename = "US/Pacific"
+    now = datetime.now(timezone(zonename))
+    dst_timedelta = now.dst()
     match = re.search(r'\d{1,2}/\d{1,2}/\d{2}', message_content)
     deadline_time_original = datetime.strptime(match.group(), '%m/%d/%y')
     # Make sure deadline reflects the local time of the machine this code will run on.
-    deadline_time_goal = "01:15"
+    if dst_timedelta:
+        deadline_time_goal = "01:15"
+    else:
+        deadline_time_goal = "12:15"
     deadline_time_obj = datetime.strptime(deadline_time_goal, '%H:%M')
     deadline = deadline_time_original + timedelta(
         days=1, hours=deadline_time_obj.hour, minutes=deadline_time_obj.minute)
@@ -292,8 +298,7 @@ async def currattendance(ctx):
 async def help(ctx):
     embed_result = discord.Embed(
         title="Help",
-        description=
-        "Use !help <command> for extended information on a command.",
+        description="Use !help <command> for extended information on a command.",
         color=ctx.author.color)
     embed_result.add_field(name="Moderation", value="kill")
     embed_result.add_field(name="Basic", value="cap, current, waitlist")
@@ -320,8 +325,7 @@ async def kill(ctx):
 async def cap(ctx):
     embed_result = discord.Embed(
         title="cap",
-        description=
-        "Changes attendace capacity. If cap is increased, then it will automatically add all the people on waitlist",
+        description="Changes attendace capacity. If cap is increased, then it will automatically add all the people on waitlist",
         color=ctx.author.color)
     embed_result.add_field(name="**Syntax**", value="!cap <number>")
 
@@ -348,8 +352,7 @@ async def current(ctx):
 async def waitlist(ctx):
     embed_result = discord.Embed(
         title="waitlist",
-        description=
-        "Shows list of people beyond the node war cap that signed up. Returns list in chronological order (i.e. First on the list reacted first to announcement)",
+        description="Shows list of people beyond the node war cap that signed up. Returns list in chronological order (i.e. First on the list reacted first to announcement)",
         color=ctx.author.color)
 
     await ctx.send(embed=embed_result)
